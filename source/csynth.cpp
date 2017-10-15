@@ -74,6 +74,8 @@ void initialize_system(char * filename) {
 		}
 		fclose(fp);
 		config.display_config();
+		LOG(INFO) << config.get_grid_size();
+		config_t=config;
 
 	} else {
 		LOG(ERROR) << "File name not found.\n";

@@ -7,17 +7,17 @@ void Configholder::add_blck_to_net(vector<int> blck_to_net) {
 }
 
 
-void Configholder::add_ref_blck(vector<int> ref_blck) {
+void Configholder::add_ref_blck(vector<float> ref_blck) {
 	ref_blcks.push_back(ref_blck);
 }
 
 
 vector< vector<int> > Configholder::get_blck_to_nets() {
-	return ref_blcks;
+	return blck_to_nets;
 }
 
-vector< vector<int> > Configholder::get_ref_blcks() {
-	return blck_to_nets;
+vector< vector<float> > Configholder::get_ref_blcks() {
+	return ref_blcks;
 }
 
 int Configholder::get_grid_size() {
@@ -40,8 +40,8 @@ void Configholder::display_config() {
 		}
 	}
 	printf("</blck_to_nets>\n<static_blck>\n");
-	for(vector<int> btn : ref_blcks) {
-		printf("   <blck>%d</blck>\n      <x_cor>%d</x_cor>\n      <y_cor>%d</y_cor>\n", btn[0], btn[1], btn[2]);
+	for(vector<float> btn : ref_blcks) {
+		printf("   <blck>%f</blck>\n      <x_cor>%f</x_cor>\n      <y_cor>%f</y_cor>\n", btn[0], btn[1], btn[2]);
 	}
 	printf("</static_blck>\n");
 	printf("**[eoc]**\n\n");

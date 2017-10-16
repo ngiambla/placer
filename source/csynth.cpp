@@ -1,10 +1,14 @@
-#include "pdefs.h"
-#include "graphics.h"
-#include "configholder.h"
+//#include "pdefs.h"
 #include <fstream>
+#include "graphics.h"
+//#include "configholder.h"
+#include "placer.h"
 
 // Usage Message
 const char * usage="Usage ./placer -file [filename]\n";
+
+// Reference to config
+Configholder config;
 
 // function references for graphics.
 void drawscreen(void);
@@ -12,15 +16,13 @@ void act_on_button_press (float x, float y);
 void act_on_mouse_move (float x, float y);
 void act_on_key_press (char c);
 
-//static vars for referencing.
-static Configholder config_t;
 
 void initialize_system(char * filename) {
-	Configholder config;
+	//Configholder config;
 	FILE *fp;
 
 	vector<int> blck_net;
-	vector<int> secure_block;
+	vector<float> secure_block;
 	
 	int decode_stage=0;
 	int switch_to_secure_state=0;
@@ -41,7 +43,6 @@ void initialize_system(char * filename) {
 			while(token != NULL) {
 				if(switch_to_secure_state==0) {
 					if(decode_stage==0){
-						config.add_blck_to_net(blck_net);
 						blck_net.clear();
 						if(atoi(token) == -1) {
 							switch_to_secure_state=1;
@@ -52,15 +53,19 @@ void initialize_system(char * filename) {
 					if(atoi(token) != -1){
 						blck_net.push_back(atoi(token));
 						++decode_stage;
+					} else {
+						config.add_blck_to_net(blck_net);						
 					}
 
 				} else {
 					if(decode_stage==0) {
 						if(atoi(token) == -1) {
 							break;
+						} else {
+
 						}
 					}
-					secure_block.push_back(atoi(token));
+					secure_block.push_back(atof(token));
 					++decode_stage;
 					if(decode_stage==3) {
 						config.add_ref_blck(secure_block);
@@ -75,10 +80,10 @@ void initialize_system(char * filename) {
 		fclose(fp);
 		config.display_config();
 		LOG(INFO) << config.get_grid_size();
-		config_t=config;
 
 	} else {
 		LOG(ERROR) << "File name not found.\n";
+		exit(-1);
 	}
 
 }
@@ -90,6 +95,9 @@ int main(int argc, char * argv[]) {
 	if(argc == 3) {
 		strncat(filename, argv[2], 4);		
 		initialize_system(filename);
+		Placer placer;
+
+		placer.place(config);		
 
 	} else {
 		printf("%s", usage);

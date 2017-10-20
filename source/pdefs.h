@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <vector>
+#include <map>
 #include "log.h"
 
 using namespace std;

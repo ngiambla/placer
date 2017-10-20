@@ -15,7 +15,7 @@ class Placer {
 		Placer();
 		~Placer();
 
-		int place(Configholder config_t);
+		int place(Configholder &config_t);
 
 };
 

@@ -1,23 +1,30 @@
 #include "placer.h"
 
-Placer::Placer() {
+// void constructors and destructors.
+Placer::Placer() {}
+Placer::~Placer() {}
+
+void assign_cost(map<int, vector<int> > &nbs_map_t) {
+	LOG(INFO) << "-- assiging cost....";
+}
+
+void clique_model_assignment(map<int, vector<int> > &nbs_map_t) {
 
 }
 
-Placer::~Placer() {}
+void send_net_for_analysis() {
+	LOG(DEBUG) << "-- sending Net [] for analysis";
+}
 
-int Placer::place(Configholder config_t) {
-	
+int Placer::place(Configholder &config_t) {
+	int placer_status=1;
+
 	vector< vector<int> > blck_to_nets = config_t.get_blck_to_nets();
 	vector< vector<float> > ref_blcks = config_t.get_ref_blcks();
 
-	LOG(INFO) << "Going formulate nets.";
-	for(vector<int> blck_connections : blck_to_nets) {
+	iter=0;
 
-		LOG(INFO) << "Checking for ["<< blck_connections[0] <<"]";
-
-	}
-	return 1;
+	return placer_status;
 }
 
 

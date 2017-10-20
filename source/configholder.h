@@ -8,6 +8,7 @@ class Configholder {
 	private: 
 		vector< vector<int> > blck_to_nets;
 		vector< vector<float> > ref_blcks;
+		map<int, vector<int> > nbs_map;
 
 	public:
 		Configholder(){};
@@ -17,6 +18,7 @@ class Configholder {
 		void add_ref_blck(vector<float> ref_blck);
 		vector< vector<int> > get_blck_to_nets();
 		vector< vector<float> > get_ref_blcks();
+		map<int, vector<int> > get_nbs_map();
 		int get_grid_size();
 		void display_config();
 

@@ -4,6 +4,23 @@
 the block to nets (for connections) */
 void Configholder::add_blck_to_net(vector<int> blck_to_net) {
 	blck_to_nets.push_back(blck_to_net);
+	int i=0;
+	for(int item : blck_to_net) {
+		if(i==1) {
+			if ( nbs_map.count(item) == 0 ) {
+				
+				LOG(INFO) << "Net ["<< item <<"] encountered.";
+				vector<int> blcks;
+				nbs_map[item]=blcks;
+				nbs_map[item].push_back(blck_to_net[0]);
+
+			} else {
+				nbs_map[item].push_back(blck_to_net[0]);
+			}			
+		} else {
+			i=1;
+		}
+	}
 }
 
 

@@ -78,8 +78,7 @@ void initialize_system(char * filename) {
 
 		}
 		fclose(fp);
-		config.display_config();
-		LOG(INFO) << config.get_grid_size();
+		//config.display_config();
 
 	} else {
 		LOG(ERROR) << "File name not found.\n";
@@ -97,7 +96,11 @@ int main(int argc, char * argv[]) {
 		initialize_system(filename);
 		Placer placer;
 
-		placer.place(config);		
+		if(placer.place(config)==1) {
+
+		} else {
+			LOG(ERROR) << "Placement was unsucessful.";
+		}
 
 	} else {
 		printf("%s", usage);

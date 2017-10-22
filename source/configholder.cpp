@@ -38,7 +38,7 @@ vector< vector<float> > Configholder::get_ref_blcks() {
 }
 
 int Configholder::get_grid_size() {
-	return (int)ceil(sqrt(ref_blcks.size()+blck_to_nets.size()));
+	return (int)ceil(sqrt(blck_to_nets.size()));
 }
 
 void Configholder::display_config() {

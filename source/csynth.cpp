@@ -1,7 +1,7 @@
 //#include "pdefs.h"
 #include <fstream>
 #include "graphics.h"
-//#include "configholder.h"
+#include "ic.h"
 #include "placer.h"
 
 // Usage Message
@@ -9,6 +9,7 @@ const char * usage="Usage ./placer -file [filename]\n";
 
 // Reference to config
 Configholder config;
+
 
 // function references for graphics.
 void drawscreen(void);
@@ -18,7 +19,7 @@ void act_on_key_press (char c);
 
 
 void initialize_system(char * filename) {
-	//Configholder config;
+
 	FILE *fp;
 
 	vector<int> blck_net;
@@ -78,7 +79,7 @@ void initialize_system(char * filename) {
 
 		}
 		fclose(fp);
-		//config.display_config();
+		LOG(DEBUG) << "Grid Size [" << config.get_grid_size() << "][" << config.get_grid_size() << "]";
 
 	} else {
 		LOG(ERROR) << "File name not found.\n";
@@ -95,12 +96,12 @@ int main(int argc, char * argv[]) {
 		strncat(filename, argv[2], 4);		
 		initialize_system(filename);
 		Placer placer;
-
-		if(placer.place(config)==1) {
-
-		} else {
-			LOG(ERROR) << "Placement was unsucessful.";
-		}
+		IC ic(config);
+		// if(placer.place()==1) {
+		// 	LOG(INFO) << "Placement Complete.";
+		// } else {
+		// 	LOG(ERROR) << "Placement was unsucessful.";
+		// }
 
 	} else {
 		printf("%s", usage);

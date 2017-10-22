@@ -12,7 +12,7 @@ include ../../SuiteSparse_config/SuiteSparse_config.mk
 
 # UMFPACK depends on AMD, SuiteSparse_config, LAPACK, and the BLAS.
 # It optionally relies on CHOLMOD
-LDLIBS += -lamd -lsuitesparseconfig $(LAPACK) $(BLAS)
+LDLIBS += -lamd -lsuitesparseconfig $(LAPACK)
 
 # compile and install in SuiteSparse/lib
 library:

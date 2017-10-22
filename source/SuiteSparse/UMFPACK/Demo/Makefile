@@ -28,7 +28,7 @@ C = $(CC) $(CF) $(UMFPACK_CONFIG) $(CONFIG_PARTITION) \
     -I../../include
 
 LIBS = $(LDLIBS) -L../../lib -lumfpack -lamd -lsuitesparseconfig \
-	$(LIB_WITH_CHOLMOD) $(LAPACK) $(BLAS)
+	$(LIB_WITH_CHOLMOD) $(LAPACK)
 
 libs: metis
 	( cd ../../SuiteSparse_config ; $(MAKE) )

@@ -9,7 +9,7 @@ void assign_cost(map<int, vector<int> > &nbs_map_t) {
 }
 
 void clique_model_assignment(map<int, vector<int> > &nbs_map_t) {
-
+	
 }
 
 void send_net_for_analysis() {

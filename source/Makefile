@@ -20,8 +20,8 @@ else
 endif
 
 
-$(EXE): graphics.o csynth.o configholder.o placer.o
-	g++ $(FLAGS) graphics.o csynth.o configholder.o placer.o $(GRAPHICS_LIBS) -o $(EXE)
+$(EXE): graphics.o csynth.o configholder.o placer.o blck.o ic.o
+	g++ $(FLAGS) graphics.o csynth.o configholder.o placer.o blck.o ic.o $(GRAPHICS_LIBS) -o $(EXE)
 
 graphics.o: graphics.cpp $(HDR)
 	g++ -c $(FLAGS) graphics.cpp
@@ -34,6 +34,12 @@ configholder.o: configholder.cpp $(HDR)
 
 placer.o: placer.cpp $(HDR)
 	g++ -c $(FLAGS) placer.cpp
+
+blck.o: blck.cpp $(HDR)
+	g++ -c $(FLAGS) blck.cpp
+
+ic.o: ic.cpp $(HDR)
+	g++ -c $(FLAGS) ic.cpp
 
 clean:
 	rm $(EXE) *.o

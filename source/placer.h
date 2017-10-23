@@ -2,7 +2,7 @@
 #define __PLACER_H__
 
 #include "pdefs.h"
-#include "configholder.h"
+#include "ic.h"
 
 class Placer {
 
@@ -15,7 +15,7 @@ class Placer {
 		Placer();
 		~Placer();
 
-		int place(Configholder &config_t);
+		int place(IC ic);
 
 };
 

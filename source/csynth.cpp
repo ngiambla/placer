@@ -98,6 +98,7 @@ void initialize_system(char * filename) {
 // main call.
 int main(int argc, char * argv[]) {
 	char filename[20]="../circuits/";
+	int was_placed=0;
 
 	if(argc == 3) {
 		strncat(filename, argv[2], 4);		
@@ -105,6 +106,8 @@ int main(int argc, char * argv[]) {
 		Placer placer;
 		IC ic(config);
 		ic.display_blcks();
+
+		was_placed=placer.place(ic);
 
 	} else {
 		printf("%s", usage);

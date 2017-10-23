@@ -4,17 +4,6 @@
 Placer::Placer() {}
 Placer::~Placer() {}
 
-void assign_cost(map<int, vector<int> > &nbs_map_t) {
-	LOG(INFO) << "-- assiging cost....";
-}
-
-void clique_model_assignment(map<int, vector<int> > &nbs_map_t) {
-	
-}
-
-void send_net_for_analysis() {
-	LOG(DEBUG) << "-- sending Net [] for analysis";
-}
 
 int Placer::place(Configholder &config_t) {
 	int placer_status=1;

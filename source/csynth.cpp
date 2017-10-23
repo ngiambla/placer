@@ -1,4 +1,3 @@
-//#include "pdefs.h"
 #include <fstream>
 #include "graphics.h"
 #include "ic.h"
@@ -47,7 +46,7 @@ void initialize_system(char * filename) {
 						blck_net.clear();
 						if(atoi(token) == -1) {
 							switch_to_secure_state=1;
-							decode_stage=-1;
+							decode_stage=0;
 							break;
 						}
 					}
@@ -59,19 +58,26 @@ void initialize_system(char * filename) {
 					}
 
 				} else {
-					if(decode_stage==0) {
-						if(atoi(token) == -1) {
-							break;
-						} else {
 
-						}
+					if(atoi(token)==-1) {
+						break;
 					}
-					secure_block.push_back(atof(token));
-					++decode_stage;
-					if(decode_stage==3) {
-						config.add_ref_blck(secure_block);
-						secure_block.clear();
-						decode_stage=0;
+
+					switch(decode_stage) {
+						case 0:
+							secure_block.clear();
+							secure_block.push_back(atof(token));
+							++decode_stage;
+							break;
+						case 1:
+							secure_block.push_back(atof(token));
+							++decode_stage;
+							break;
+						case 2:
+							secure_block.push_back(atof(token));
+							config.add_ref_blck(secure_block);
+							decode_stage=0;
+							break;
 					}
 				}
 				token = strtok(NULL, " ");
@@ -79,7 +85,8 @@ void initialize_system(char * filename) {
 
 		}
 		fclose(fp);
-		LOG(DEBUG) << "Grid Size [" << config.get_grid_size() << "][" << config.get_grid_size() << "]";
+		config.display_config();
+		LOG(DEBUG) << "Grid Size [" << config.get_grid_size() << "]X[" << config.get_grid_size() << "]";
 
 	} else {
 		LOG(ERROR) << "File name not found.\n";
@@ -97,11 +104,7 @@ int main(int argc, char * argv[]) {
 		initialize_system(filename);
 		Placer placer;
 		IC ic(config);
-		// if(placer.place()==1) {
-		// 	LOG(INFO) << "Placement Complete.";
-		// } else {
-		// 	LOG(ERROR) << "Placement was unsucessful.";
-		// }
+		ic.display_blcks();
 
 	} else {
 		printf("%s", usage);

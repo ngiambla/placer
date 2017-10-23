@@ -8,8 +8,6 @@ void Configholder::add_blck_to_net(vector<int> blck_to_net) {
 	for(int item : blck_to_net) {
 		if(i==1) {
 			if ( nbs_map.count(item) == 0 ) {
-				
-				LOG(INFO) << "Net ["<< item <<"] encountered.";
 				vector<int> blcks;
 				nbs_map[item]=blcks;
 				nbs_map[item].push_back(blck_to_net[0]);
@@ -37,29 +35,21 @@ vector< vector<float> > Configholder::get_ref_blcks() {
 	return ref_blcks;
 }
 
+map<int, vector<int> > Configholder::get_nbs_map() {
+	return nbs_map;
+}
+
 int Configholder::get_grid_size() {
 	return (int)ceil(sqrt(blck_to_nets.size()));
 }
 
 void Configholder::display_config() {
-	int i;
-	printf("[..-* Config *-..]\n\n");
-	printf("<blck_to_nets>\n");
-	for(vector<int> btn : blck_to_nets) {
-		i=0;
-		for(int item : btn) {
-			if(i==0) {
-				printf("   <blck>%d</blck>\n", item);
-			} else {
-				printf("      <net>%d</net>\n", item);
-			}
-			++i;
+	printf("[config] -- ");
+	for(const auto& key : nbs_map) {
+		printf("[NET] [%d]\n", key.first);
+		for(int bnum : key.second) {
+			printf("--[BLCK] [%d]\n", bnum);
 		}
+		printf("\n");
 	}
-	printf("</blck_to_nets>\n<static_blck>\n");
-	for(vector<float> btn : ref_blcks) {
-		printf("   <blck>%f</blck>\n      <x_cor>%f</x_cor>\n      <y_cor>%f</y_cor>\n", btn[0], btn[1], btn[2]);
-	}
-	printf("</static_blck>\n");
-	printf("**[eoc]**\n\n");
 }

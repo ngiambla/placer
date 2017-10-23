@@ -10,10 +10,11 @@ typedef vector<Blck> Blcks;
 class IC {
 	private:
 		Blcks blcks;
+		map<int, vector<int> > nbs_map;
 
 	public:
 		IC(Configholder config);
-		Blck * get_blck(int id);
+		void display_blcks();
 };
 
 #endif

@@ -6,24 +6,31 @@
 
 class Blck {
 	private:
-		map<int, double> net_weights;
-		vector<int> config;
+		map<int, vector<float> > net_w_expansion;
 
-		double x;
-		double y;
+		float x;
+		float y;
+
+		int isFixed;
+
+		int id;
 
 	public:
-		Blck(vector<int> config_t);
+		Blck(int id);
 
-		double get_x();
-		double get_y();
+		float get_x();
+		float get_y();
 
-		void set_x(double x);
-		void set_y(double y);
+		void set_x(float x);
+		void set_y(float y);
 
-		double get_weight(int netNum);
-		void set_weight(int netNum, double weight);
+		float get_net_weight(int netNum);
+		void add_edge_weight(int netNum, float weight, int howmany);
+		float get_total_weight();
 
+		void set_fixed();
+
+		void display_blck();
 };
 
 #endif

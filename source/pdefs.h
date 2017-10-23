@@ -10,7 +10,9 @@
 
 using namespace std;
 
-#define ERR -10
-#define SUCCESS 1
+#define ERR -10		//error status code
+#define SUCCESS 1	//success status code
+
+#define UNKNOWN -1 	//for an unknown placement pos.
 
 #endif

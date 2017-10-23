@@ -55,15 +55,16 @@ float Blck::get_total_weight() {
 }
 
 void Blck::display_blck() {
-	printf("[BLCK] -- [%d]\n", id);
-	printf("[isFixed] -- [%d]\n", isFixed);
-	printf("[pos] [%f][%f]\n",x,y);
+	printf("#####################\nid -- [%d]\n", id);
+	printf("isFixed -- [%d]\n", isFixed);
+	printf("pos [%f][%f]\n",x,y);
 
 	for(const auto& key : net_w_expansion) {
-		printf("[NET] [%d]\n  [WEIGHT]", key.first);
+		printf("net-[%d]\n  w_edges", key.first);
 		for(float weight : key.second) {
 			printf("[%f]", weight);
 		}
 		printf("\n");
 	}
+	printf("#####################\n\n");
 }

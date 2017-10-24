@@ -3,7 +3,6 @@
 
 #include "pdefs.h"
 #include "ic.h"
-//#include "configholder.h"
 
 class Placer {
 

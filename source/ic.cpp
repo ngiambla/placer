@@ -28,3 +28,7 @@ void IC::display_blcks() {
 		b.display_blck();
 	}
 }
+
+Blck &IC::get_blck(int id) {
+	return blcks[id];
+}

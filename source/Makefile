@@ -6,7 +6,7 @@ EXE = placer
 HDR = log.h
 FLAGS = -g -Wall -D$(PLATFORM) -std=c++11
 CUR_DIR = $(shell pwd)
-UMF_LIB = -L$(CUR_DIR)/SuiteSparse/lib -I$(CUR_DIR)/SuiteSparse/include
+UMF_LIB = -L$(CUR_DIR)/SuiteSparse/lib -lumfpack -lamd -lsuitesparseconfig -I$(CUR_DIR)/SuiteSparse/include -lm -Wl,-rpath=$(CUR_DIR)/SuiteSparse/lib
 UNAME := $(shell uname)
 
 $(System is $(UNAME))
@@ -23,7 +23,7 @@ endif
 
 
 $(EXE): graphics.o csynth.o configholder.o placer.o blck.o ic.o
-	g++ $(FLAGS) graphics.o csynth.o configholder.o placer.o blck.o ic.o $(GRAPHICS_LIBS) -o $(EXE)
+	g++ $(FLAGS) graphics.o csynth.o configholder.o placer.o blck.o ic.o $(GRAPHICS_LIBS) -o $(EXE) $(UMF_LIB)
 
 graphics.o: graphics.cpp $(HDR)
 	g++ -c $(FLAGS) graphics.cpp
@@ -35,7 +35,7 @@ configholder.o: configholder.cpp $(HDR)
 	g++ -c $(FLAGS) configholder.cpp
 
 placer.o: placer.cpp $(HDR)
-	g++ -c $(FLAGS) placer.cpp $(UMF_LIB)
+	g++ -c $(FLAGS) placer.cpp $(UMF_LIB) -fPIC
 
 blck.o: blck.cpp $(HDR)
 	g++ -c $(FLAGS) blck.cpp

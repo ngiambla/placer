@@ -15,7 +15,7 @@ class IC {
 	public:
 		IC(Configholder config);
 		void display_blcks();
-
+		Blck &get_blck(int id);
 };
 
 #endif

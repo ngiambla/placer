@@ -107,7 +107,7 @@ int main(int argc, char * argv[]) {
 		IC ic(config);
 		ic.display_blcks();
 
-		was_placed=placer.place(ic);
+		was_placed=placer.place(ic, config);
 
 	} else {
 		printf("%s", usage);

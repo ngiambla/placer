@@ -3,6 +3,7 @@
 
 #include "pdefs.h"
 #include "ic.h"
+//#include "configholder.h"
 
 class Placer {
 
@@ -15,7 +16,7 @@ class Placer {
 		Placer();
 		~Placer();
 
-		int place(IC ic);
+		int place(IC ic, Configholder config);
 
 };
 

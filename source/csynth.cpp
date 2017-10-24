@@ -30,7 +30,7 @@ void initialize_system(char * filename) {
 	char line[128];
 
 	fp=fopen(filename, "r");
-	LOG(INFO) << "Reading file "<< filename << "\n";
+	LOG(INFO) << "Reading file "<< filename;
 
 
 	if(fp) {
@@ -85,8 +85,8 @@ void initialize_system(char * filename) {
 
 		}
 		fclose(fp);
-		config.display_config();
-		LOG(DEBUG) << "Grid Size [" << config.get_grid_size() << "]X[" << config.get_grid_size() << "]";
+		LOG(INFO) << "-- config read-in complete.";
+		LOG(INFO) << "Grid Size [" << config.get_grid_size() << "]X[" << config.get_grid_size() << "]";
 
 	} else {
 		LOG(ERROR) << "File name not found.\n";
@@ -105,8 +105,6 @@ int main(int argc, char * argv[]) {
 		initialize_system(filename);
 		Placer placer;
 		IC ic(config);
-		ic.display_blcks();
-
 		was_placed=placer.place(ic, config);
 
 	} else {

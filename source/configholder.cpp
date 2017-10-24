@@ -6,6 +6,10 @@ void Configholder::add_blck_to_net(vector<int> blck_to_net) {
 	blck_to_nets.push_back(blck_to_net);
 	int i=0;
 	for(int item : blck_to_net) {
+		if(item ==0 ) {
+			LOG(ERROR) << "FOUND";
+			exit(-1);
+		}
 		if(i==1) {
 			if ( nbs_map.count(item) == 0 ) {
 				vector<int> blcks;

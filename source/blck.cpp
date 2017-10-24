@@ -2,12 +2,12 @@
 #include "blck.h"
 
 //constructor
-Blck::Blck(int id) {
-	this->id=id;
+Blck::Blck() {
 	isFixed=0;
 	x=UNKNOWN;
 	y=UNKNOWN;
 }
+
 
 // typical getters and setters
 float Blck::get_x() {
@@ -21,7 +21,6 @@ float Blck::get_y() {
 void Blck::set_fixed() {
 	isFixed=1;
 }
-
 
 void Blck::set_x(float x) {
 	if(isFixed == 0) {
@@ -55,7 +54,7 @@ float Blck::get_total_weight() {
 }
 
 void Blck::display_blck() {
-	printf("#####################\nid -- [%d]\n", id);
+	printf("#####################\n");
 	printf("isFixed -- [%d]\n", isFixed);
 	printf("pos [%f][%f]\n",x,y);
 

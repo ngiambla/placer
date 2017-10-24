@@ -10,6 +10,7 @@ typedef vector<Blck> Blcks;
 class IC {
 	private:
 		Blcks blcks;
+		map<int, Blck> blck_map;
 		map<int, vector<int> > nbs_map;
 
 	public:

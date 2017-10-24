@@ -16,7 +16,7 @@ class Blck {
 		int id;
 
 	public:
-		Blck(int id);
+		Blck();
 
 		float get_x();
 		float get_y();
@@ -29,6 +29,7 @@ class Blck {
 		float get_total_weight();
 
 		void set_fixed();
+		void set_id(int id);
 
 		void display_blck();
 };

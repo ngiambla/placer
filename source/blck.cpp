@@ -58,7 +58,13 @@ void Blck::add_edge_weight(int netNum, float weight, int howmany) {
 }
 
 float Blck::get_total_weight() {
-
+	float sum=0;
+	for(const auto& key : net_w_expansion) {
+		for(float weight : key.second) {
+			sum=sum+weight;
+		}	
+	}	
+	return sum;
 }
 
 void Blck::display_blck() {

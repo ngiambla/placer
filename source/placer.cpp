@@ -36,12 +36,14 @@ int Placer::place(IC ic, Configholder config) {
 	int * Tj;
 	int * Tx;
 	int * b;
-	int status, i;
+	int status, i, cur_idx=0;
 	float weight;
 
 	vector<int> Ti_t;
 	vector<int> Tj_t;
 	vector<int> Tx_t;
+
+	map<int, int> blck_to_idx;
 
 	vector<int> b_t;
 
@@ -56,19 +58,37 @@ int Placer::place(IC ic, Configholder config) {
 	LOG(INFO) << "..-* Shaping Matrix *-..";
 	for(vector<int> item : blck_to_nets){				// get blck, and check connected nets
 		Blck b = ic.get_blck(item[0]);					// extract blck from ic
-		if(b.isFixed() == 0) {							// make sure it is not fixed (not included in the matrix to solve)
+		if(b.is_fixed() == 0) {	
+			blck_to_idx[item[0]]=cur_idx;				// make blocks such that there is a relative space between matrix i.e 
+			++cur_idx;
+		}
+	}
+
+	for(vector<int> item : blck_to_nets){				// get blck, and check connected nets
+		Blck b = ic.get_blck(item[0]);					// extract blck from ic
+		if(b.is_fixed() == 0) {							// make sure it is not fixed (not included in the matrix to solve)
+			Ti_t.push_back(blck_to_idx[item[0]]);
+			Tj_t.push_back(blck_to_idx[item[0]]);
+			Tx_t.push_back(b.get_total_weight());
 			for(i=1 ; i< item.size(); ++i) {
 				for(int bnum : nbs_map[item[i]]) {
 
 				}		
 			}
-		} else {
-			
-		}
+			++cur_idx;
+		} 
 	}
 
 	LOG(INFO) << "-- Compressing Matrix.";
-
+	for(int k : Ti_t) {
+		LOG(INFO) << "row is: "<<k;
+	}
+	for(int k : Tj_t) {
+		LOG(INFO) << "col is: "<<k;
+	}
+	for(int k : Tx_t) {
+		LOG(INFO) << "Diagonal is: "<<k;
+	}
 	//status=umfpack_di_triplet_to_col(n, n, nz, Ti, Tj, Tx, Ap, Ai, Ax, NULL);
 
 	LOG(INFO) << "-- Sending to solver";

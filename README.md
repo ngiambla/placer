@@ -13,7 +13,7 @@ This should produce no errors, and minimal warnings.
 
 ## Usage ##
 
-./place -file [filename]
+./placer -file [filename]
 
 ## Author ##
 

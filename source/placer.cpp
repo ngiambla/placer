@@ -32,7 +32,8 @@ int Placer::place(IC ic, Configholder config) {
 	int * Ti, * Ai;
 	int * Tj, * Ap;
 	double * Tx, *Ax;
-	int * b;
+	double * b;
+	double * x;
 	int status, i, cur_idx=0, cur_col=0;
 
 	float cur_b=0;
@@ -45,7 +46,7 @@ int Placer::place(IC ic, Configholder config) {
 	map<int, int> idx_to_blck;
 	map< pair<int, int>, float> check_entry;
 
-	vector<float> b_t;
+	vector<double> b_t;
 
 	int placer_status=1;
 	LOG(INFO) << "Beginning Placement";
@@ -111,9 +112,12 @@ int Placer::place(IC ic, Configholder config) {
 	Tj=&Tj_t[0];
 	Tx=&Tx_t[0];
 
+	b=&b_t[0];
+
 	Ap=new int[n+1];
 	Ai=new int[nz];
 	Ax=new double[nz];
+	x=new double[n];
 
 	LOG(INFO) << "-- Non Zero Entries: "<< nz;
 
@@ -127,14 +131,19 @@ int Placer::place(IC ic, Configholder config) {
 	if (status != UMFPACK_OK) {
 		return EXIT_FAILURE;
 	}
-	LOG(INFO) << "-- Sending to solver";
 
-	//solve_equation();
+
+
+	LOG(INFO) << "-- Sending to solver";
+//solve_equation(int n, int * Ap, int * Ai, double * Ax, double * x, double * b)
+	solve_equation(n, Ap, Ai, Ax, x, b);
+	LOG(INFO) << "About to modify x.";
 	LOG(INFO) << "Complete.";
 
 	delete(Ap);					//free these guys
 	delete(Ai);
 	delete(Ax);
+	delete(x);
 
 	return placer_status;
 }

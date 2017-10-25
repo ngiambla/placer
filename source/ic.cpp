@@ -9,7 +9,7 @@ IC::IC(Configholder config) {
 		Blck blck;
 		for(i=1; i< row.size(); ++i) {
 			size=nbs_map[row[i]].size();
-			blck.add_edge_weight(row[i], (float)2/size, size);
+			blck.add_edge_weight(row[i], (float)2/size, size-1);
 		}
 		blck_map[row[0]]=blck;
 	}

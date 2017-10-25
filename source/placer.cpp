@@ -81,9 +81,9 @@ int Placer::place(IC ic, Configholder config) {
 				for(int bnum : nbs_map[item[i]]) {
 					if(bnum != item[0] && ic.get_blck(bnum).is_fixed()==0) {
 						if(check_entry.count(make_pair(blck_to_idx[bnum], cur_col))>0) {
-							check_entry[make_pair(blck_to_idx[bnum], cur_col)]=check_entry[make_pair(blck_to_idx[bnum], cur_col)]+b.get_net_weight(item[i]);
+							check_entry[make_pair(blck_to_idx[bnum], cur_col)]=check_entry[make_pair(blck_to_idx[bnum], cur_col)]-b.get_net_weight(item[i]);
 						} else {
-							check_entry[make_pair(blck_to_idx[bnum], cur_col)]=b.get_net_weight(item[i]);							
+							check_entry[make_pair(blck_to_idx[bnum], cur_col)]=-b.get_net_weight(item[i]);							
 						}
 					}
 					if(bnum != item[0] && ic.get_blck(bnum).is_fixed()==1) {

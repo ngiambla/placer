@@ -22,6 +22,10 @@ void Blck::set_fixed() {
 	isFixed=1;
 }
 
+int Blck::is_fixed() {
+	return isFixed;
+}
+
 void Blck::set_x(float x) {
 	if(isFixed == 0) {
 		this->x=x;
@@ -37,13 +41,17 @@ void Blck::set_y(float y) {
 
 // allow r/w access to weights.
 float Blck::get_net_weight(int netNum) {
-	
+	if(net_w_expansion.count(netNum)>0) {
+		return net_w_expansion[netNum][0];
+	} else {
+		return -1;
+	}
 }
 
 void Blck::add_edge_weight(int netNum, float weight, int howmany) {
 	int i;
 	vector<float> weights;
-	for(i=0; i<howmany-1; ++i) {
+	for(i=0; i<howmany; ++i) {
 		weights.push_back(weight);
 	}
 	net_w_expansion[netNum]=weights;

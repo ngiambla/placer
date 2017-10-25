@@ -13,8 +13,6 @@ class Blck {
 
 		int isFixed;
 
-		int id;
-
 	public:
 		Blck();
 
@@ -29,7 +27,7 @@ class Blck {
 		float get_total_weight();
 
 		void set_fixed();
-		void set_id(int id);
+		int is_fixed();
 
 		void display_blck();
 };

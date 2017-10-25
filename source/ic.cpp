@@ -1,5 +1,5 @@
 #include "ic.h"
-
+#include <iostream>
 IC::IC(Configholder config) {
 	int i=0;
 	int size;

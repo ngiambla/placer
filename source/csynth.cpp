@@ -1,4 +1,5 @@
 #include <fstream>
+#include <iostream>
 #include "graphics.h"
 #include "ic.h"
 #include "placer.h"
@@ -99,13 +100,24 @@ void initialize_system(char * filename) {
 int main(int argc, char * argv[]) {
 	char filename[20]="../circuits/";
 	int was_placed=0;
+	int iters=0;
 
 	if(argc == 3) {
 		strncat(filename, argv[2], 4);		
 		initialize_system(filename);
 		Placer placer;
 		IC ic(config);
-		was_placed=placer.place(ic, config);
+
+		while(1) {
+			was_placed=placer.place(ic, config);
+			if(was_placed==1) {
+				placer.spread(ic, iters);
+			}
+			LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl();
+			cin.ignore();
+			++iters;
+		}
+		
 
 	} else {
 		printf("%s", usage);

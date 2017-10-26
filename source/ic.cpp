@@ -3,6 +3,7 @@
 IC::IC(Configholder config) {
 	int i=0;
 	int size;
+	this->grid_size=config.get_grid_size();
 	nbs_map = config.get_nbs_map();
 	
 	for(vector<int> row : config.get_blck_to_nets()) {
@@ -31,4 +32,8 @@ void IC::display_blcks() {
 
 Blck &IC::get_blck(int id) {
 	return blck_map[id];
+}
+
+int IC::get_grid_size() {
+	return grid_size;
 }

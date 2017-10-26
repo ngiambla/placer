@@ -7,15 +7,18 @@
 class Placer {
 
 	private:
-		int iter;
+		float hpwl;
 		void begin_place();
 		void find_sys();
+		void calculate_hpwl(IC ic, Configholder config);
 
 	public:
 		Placer();
 		~Placer();
 
 		int place(IC &ic, Configholder config);
+		int spread(IC &ic, int iter);
+		float get_hpwl();
 
 };
 

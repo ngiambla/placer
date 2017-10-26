@@ -12,21 +12,45 @@ Placer::~Placer() {}
 
 int solve_equation(int n, int * Ap, int * Ai, double * Ax, double * x, double * b, int which_var) {
 	double *null = (double *) NULL ;
-	int i ;
 	void *Symbolic, *Numeric ;
 	(void) umfpack_di_symbolic (n, n, Ap, Ai, Ax, &Symbolic, null, null) ;
 	(void) umfpack_di_numeric (Ap, Ai, Ax, Symbolic, &Numeric, null, null) ;
 	umfpack_di_free_symbolic (&Symbolic) ;
 	(void) umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, null, null) ;
 	umfpack_di_free_numeric (&Numeric) ;
-	for (i = 0 ; i < n ; i++) {
-		if(which_var==0) {
-			printf ("x [%d] = %g\n", i, x [i]);	
-		} else {
-			printf ("y [%d] = %g\n", i, x [i]);	
-		}
-	}
 	return 0;
+}
+
+void Placer::calculate_hpwl(IC ic, Configholder config) {
+	// float min_x, max_x;
+	// float min_y, max_y=0;
+
+	// float bot_left_x=0;
+	// float bot_left_y=ic.get_grid_size();
+
+	// float top_right_x=ic.get_grid_size();
+	// float top_right_y=0;
+
+	// float bot_dif_x=0;
+	// float bot_dif_y=0;
+
+	// float top_dif_x=0;
+	// float top_dif_y=0;
+
+	// float bx, by;
+
+	// for(vector<int> row : config.get_blck_to_nets()) {
+	// //find min x, y;
+	// 	bx=ic.get_blck(row[0]).get_x();
+	// 	by=ic.get_blck(row[0]).get_y();
+
+
+
+
+	// //find max x, y;
+	// }
+
+	hpwl=0;
 }
 
 int Placer::place(IC &ic, Configholder config) {
@@ -130,10 +154,6 @@ int Placer::place(IC &ic, Configholder config) {
 
 	LOG(INFO) << "-- Non Zero Entries: "<< nz;
 
-	// for(i=0; i< b_t.size(); ++i) {
-	// 	LOG(INFO) << "["<< b_t[i] <<"]\n";
-	// }
-
 	status=umfpack_di_triplet_to_col(n, n, nz, Ti, Tj, Tx, Ap, Ai, Ax, NULL);
 	if (status != UMFPACK_OK) {
 		return EXIT_FAILURE;
@@ -156,10 +176,10 @@ int Placer::place(IC &ic, Configholder config) {
 	for(i=0; i< n; ++i) {
 		ic.get_blck(idx_to_blck[i]).set_y(x[i]);
 	}
-	LOG(INFO) << "Complete.";
 
-	LOG(INFO) << "checking results";
-	ic.get_blck(idx_to_blck[0]).display_blck();
+	calculate_hpwl(ic, config);
+
+	LOG(INFO) << "Complete.";
 
 	delete(Ap);					//free these guys
 	delete(Ai);
@@ -167,6 +187,17 @@ int Placer::place(IC &ic, Configholder config) {
 	delete(x);
 
 	return placer_status;
+}
+
+
+int Placer::spread(IC &ic, int iter) {
+	int spread_status=1;
+	ic.get_blck(6).display_blck();
+	return spread_status;
+}
+
+float Placer::get_hpwl() {
+	return hpwl;
 }
 
 

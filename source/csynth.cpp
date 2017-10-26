@@ -111,7 +111,7 @@ int main(int argc, char * argv[]) {
 		while(1) {
 			was_placed=placer.place(ic, config);
 			if(was_placed==1) {
-				placer.spread(ic, iters);
+				placer.spread(ic, config, iters);
 			}
 			LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl();
 			cin.ignore();

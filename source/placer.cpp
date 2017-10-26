@@ -22,35 +22,33 @@ int solve_equation(int n, int * Ap, int * Ai, double * Ax, double * x, double * 
 }
 
 void Placer::calculate_hpwl(IC ic, Configholder config) {
-	// float min_x, max_x;
-	// float min_y, max_y=0;
+	float min_x=ic.get_grid_size(), max_x=0;
+	float min_y=ic.get_grid_size(), max_y=0;
 
-	// float bot_left_x=0;
-	// float bot_left_y=ic.get_grid_size();
+	float bx, by;
 
-	// float top_right_x=ic.get_grid_size();
-	// float top_right_y=0;
+	for(vector<int> row : config.get_blck_to_nets()) {
+		bx=ic.get_blck(row[0]).get_x();
+		by=ic.get_blck(row[0]).get_y();
+		
 
-	// float bot_dif_x=0;
-	// float bot_dif_y=0;
+		if(bx<=min_x) { //find min x;
+			min_x=bx;
+		}
+		if(by<=min_y) { // find min y;
+			min_y=by;
+		}
 
-	// float top_dif_x=0;
-	// float top_dif_y=0;
+		if(bx>=max_x) { // find max x;
+			max_x=bx;
+		}
 
-	// float bx, by;
+		if(by>=min_y) { // find max y;
+			max_y=by;
+		}
+	}
 
-	// for(vector<int> row : config.get_blck_to_nets()) {
-	// //find min x, y;
-	// 	bx=ic.get_blck(row[0]).get_x();
-	// 	by=ic.get_blck(row[0]).get_y();
-
-
-
-
-	// //find max x, y;
-	// }
-
-	hpwl=0;
+	hpwl=(max_x-min_x)+(max_y-min_y);
 }
 
 int Placer::place(IC &ic, Configholder config) {
@@ -189,10 +187,71 @@ int Placer::place(IC &ic, Configholder config) {
 	return placer_status;
 }
 
-
-int Placer::spread(IC &ic, int iter) {
+//
+//	[1][2]	--recursive cutting in increasing order.
+//	[4][3]			
+//
+int Placer::spread(IC &ic, Configholder &config, int iter) {
 	int spread_status=1;
-	ic.get_blck(6).display_blck();
+	int i=0;
+
+	map<int, float> next_x_cuts;
+	map<int, float> next_y_cuts;
+
+	if(iter==0) {
+		cur_x_cuts[0]=(float)ic.get_grid_size()/2;
+		cur_y_cuts[0]=(float)ic.get_grid_size()/2;
+	}
+
+	LOG(INFO) << "Iteration: "<< iter;
+	for(i=0; i<next_x_cuts.size(); ++i) {
+		// define new pseudo blocks for expansion.
+		Blck b_1;
+		Blck b_2;
+		Blck b_3;
+		Blck b_4;
+
+		// fill in pseudos blocks;
+
+		b_1.set_x(cur_x_cuts[i]/2);
+		b_1.set_y(cur_y_cuts[i]/2);
+		b_1.set_fixed();
+
+		b_2.set_x(cur_x_cuts[i]+cur_x_cuts[i]/2);
+		b_2.set_y(cur_y_cuts[i]/2);
+		b_2.set_fixed();
+
+		b_3.set_x(cur_x_cuts[i]+cur_x_cuts[i]/2);
+		b_3.set_y(cur_y_cuts[i]+cur_y_cuts[i]/2);
+		b_3.set_fixed();
+
+		b_4.set_x(cur_x_cuts[i]/2);
+		b_4.set_y(cur_y_cuts[i]+cur_y_cuts[i]/2);
+		b_4.set_fixed();
+
+		// set blcks to classes.
+
+		// define new
+		next_x_cuts[0+i*4]=cur_x_cuts[i]/2;
+		next_x_cuts[1+i*4]=cur_x_cuts[i]+cur_x_cuts[i]/2;
+		next_x_cuts[2+i*4]=cur_x_cuts[i]+cur_x_cuts[i]/2; 
+		next_x_cuts[3+i*4]=cur_x_cuts[i]/2;
+
+		next_y_cuts[0+i*4]=cur_y_cuts[i]/2;
+		next_y_cuts[1+i*4]=cur_y_cuts[i]/2;
+		next_y_cuts[2+i*4]=cur_y_cuts[i]+cur_y_cuts[i]/2;
+		next_y_cuts[3+i*4]=cur_y_cuts[i]+cur_y_cuts[i]/2;
+
+
+	}
+	// purge cuts;
+	cur_y_cuts.clear();
+	cur_x_cuts.clear();
+
+	// instantiate new cuts;
+	cur_x_cuts=next_x_cuts;
+	cur_y_cuts=next_y_cuts;
+
 	return spread_status;
 }
 

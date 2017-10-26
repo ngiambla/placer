@@ -15,7 +15,7 @@ class Placer {
 		Placer();
 		~Placer();
 
-		int place(IC ic, Configholder config);
+		int place(IC &ic, Configholder config);
 
 };
 

@@ -10,7 +10,7 @@ Placer::~Placer() {}
 
 
 
-int solve_equation(int n, int * Ap, int * Ai, double * Ax, double * x, double * b) {
+int solve_equation(int n, int * Ap, int * Ai, double * Ax, double * x, double * b, int which_var) {
 	double *null = (double *) NULL ;
 	int i ;
 	void *Symbolic, *Numeric ;
@@ -20,23 +20,30 @@ int solve_equation(int n, int * Ap, int * Ai, double * Ax, double * x, double * 
 	(void) umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, null, null) ;
 	umfpack_di_free_numeric (&Numeric) ;
 	for (i = 0 ; i < n ; i++) {
-		printf ("x [%d] = %g\n", i, x [i]) ;	
+		if(which_var==0) {
+			printf ("x [%d] = %g\n", i, x [i]);	
+		} else {
+			printf ("y [%d] = %g\n", i, x [i]);	
+		}
 	}
 	return 0;
 }
 
-int Placer::place(IC ic, Configholder config) {
+int Placer::place(IC &ic, Configholder config) {
 
 	int n=config.get_blck_to_nets().size() - config.get_ref_blcks().size();
 	int nz;
 	int * Ti, * Ai;
 	int * Tj, * Ap;
 	double * Tx, *Ax;
-	double * b;
+	double * b_x;
+	double * b_y;
 	double * x;
 	int status, i, cur_idx=0, cur_col=0;
 
-	float cur_b=0;
+	float cur_b_x=0;
+	float cur_b_y=0;
+
 
 	vector<int> Ti_t;
 	vector<int> Tj_t;
@@ -46,7 +53,8 @@ int Placer::place(IC ic, Configholder config) {
 	map<int, int> idx_to_blck;
 	map< pair<int, int>, float> check_entry;
 
-	vector<double> b_t;
+	vector<double> b_x_t;
+	vector<double> b_y_t;
 
 	int placer_status=1;
 	LOG(INFO) << "Beginning Placement";
@@ -70,9 +78,6 @@ int Placer::place(IC ic, Configholder config) {
 		Blck b = ic.get_blck(item[0]);					// extract blck from ic
 		if(b.is_fixed() == 0) {							// make sure it is not fixed (not included in the matrix to solve)
 
-			//LOG(INFO) << "Checking block: "<<item[0];
-			//b.display_blck();
-			//cin.ignore();
 			Ti_t.push_back(blck_to_idx[item[0]]);		// add sum of block egdes to diag;
 			Tj_t.push_back(blck_to_idx[item[0]]);
 			Tx_t.push_back(b.get_total_weight());
@@ -88,13 +93,16 @@ int Placer::place(IC ic, Configholder config) {
 					}
 					if(bnum != item[0] && ic.get_blck(bnum).is_fixed()==1) {
 						Blck b3 = ic.get_blck(bnum);
-						//cin.ignore();
-						cur_b=cur_b+b3.get_x()*b.get_net_weight(item[i]);	
+						cur_b_x=cur_b_x+b3.get_x()*b.get_net_weight(item[i]);
+						cur_b_y=cur_b_y+b3.get_y()*b.get_net_weight(item[i]);	
+
 					}
 				}		
 			}
-			b_t.push_back(cur_b);
-			cur_b=0;
+			b_x_t.push_back(cur_b_x);
+			b_y_t.push_back(cur_b_y);
+			cur_b_x=0;
+			cur_b_y=0;
 			++cur_col;
 		} 
 	}
@@ -112,7 +120,8 @@ int Placer::place(IC ic, Configholder config) {
 	Tj=&Tj_t[0];
 	Tx=&Tx_t[0];
 
-	b=&b_t[0];
+	b_x=&b_x_t[0];
+	b_y=&b_y_t[0];
 
 	Ap=new int[n+1];
 	Ai=new int[nz];
@@ -121,12 +130,10 @@ int Placer::place(IC ic, Configholder config) {
 
 	LOG(INFO) << "-- Non Zero Entries: "<< nz;
 
-	for(i=0; i< b_t.size(); ++i) {
-		LOG(INFO) << "["<< b_t[i] <<"]\n";
-	}
-	// for(i=0; i< Ti_t.size(); ++i) {
-	// 	LOG(INFO) << "Value ["<<Tx_t[i]<<"] @i["<< Ti_t[i] <<"]j["<< Tj_t[i] <<"]";
+	// for(i=0; i< b_t.size(); ++i) {
+	// 	LOG(INFO) << "["<< b_t[i] <<"]\n";
 	// }
+
 	status=umfpack_di_triplet_to_col(n, n, nz, Ti, Tj, Tx, Ap, Ai, Ax, NULL);
 	if (status != UMFPACK_OK) {
 		return EXIT_FAILURE;
@@ -134,11 +141,25 @@ int Placer::place(IC ic, Configholder config) {
 
 
 
-	LOG(INFO) << "-- Sending to solver";
-//solve_equation(int n, int * Ap, int * Ai, double * Ax, double * x, double * b)
-	solve_equation(n, Ap, Ai, Ax, x, b);
-	LOG(INFO) << "About to modify x.";
+	LOG(INFO) << "-- Solving for X";
+	solve_equation(n, Ap, Ai, Ax, x, b_x, 0);		// indicates x (only for semantic rep);
+
+	LOG(INFO) << "About to modify X.";
+	for(i=0; i< n; ++i) {
+		ic.get_blck(idx_to_blck[i]).set_x(x[i]);
+	}
+	
+	LOG(INFO) << "-- Solving for Y";
+	solve_equation(n, Ap, Ai, Ax, x, b_y, 1);		// indicates y '''''''''''''	
+
+	LOG(INFO) << "About to modify Y";
+	for(i=0; i< n; ++i) {
+		ic.get_blck(idx_to_blck[i]).set_y(x[i]);
+	}
 	LOG(INFO) << "Complete.";
+
+	LOG(INFO) << "checking results";
+	ic.get_blck(idx_to_blck[0]).display_blck();
 
 	delete(Ap);					//free these guys
 	delete(Ai);

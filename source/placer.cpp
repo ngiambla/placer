@@ -204,7 +204,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	}
 
 	LOG(INFO) << "Iteration: "<< iter;
-	for(i=0; i<next_x_cuts.size(); ++i) {
+	for(i=0; i<cur_x_cuts.size(); ++i) {
 		// define new pseudo blocks for expansion.
 		Blck b_1;
 		Blck b_2;
@@ -231,6 +231,22 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 		// set blcks to classes.
 
+		for(vector<int> row : config.get_blck_to_nets()) {
+			Blck b = ic.get_blck(row[0]);
+			if(b.get_x() <= cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
+				LOG(INFO) << "Class [1]";
+			} else if(b.get_x() > cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
+				LOG(INFO) << "Class [2]";
+			} else if(b.get_x() <= cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
+				LOG(INFO) << "Class [4]";
+			} else if(b.get_x() > cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
+				LOG(INFO) << "Class [3]";
+			} else {
+				LOG(INFO) << "Unclassified";
+			}
+		}
+
+
 		// define new
 		next_x_cuts[0+i*4]=cur_x_cuts[i]/2;
 		next_x_cuts[1+i*4]=cur_x_cuts[i]+cur_x_cuts[i]/2;
@@ -251,6 +267,8 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	// instantiate new cuts;
 	cur_x_cuts=next_x_cuts;
 	cur_y_cuts=next_y_cuts;
+	LOG(INFO) << "New cuts to make [x]: " <<cur_x_cuts.size();
+	LOG(INFO) << "New cuts to make [y]: " <<cur_y_cuts.size();
 
 	return spread_status;
 }

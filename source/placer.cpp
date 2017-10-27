@@ -310,7 +310,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 		for(j=0; j<4; ++j) {
 			if(new_blcks_to_net[j].size() > 1) {
-				LOG(INFO) << "quad["<< j <<"] has: " << new_blcks_to_net[j].size();
+				//LOG(INFO) << "quad["<< j <<"] has: " << new_blcks_to_net[j].size();
 				switch(j) {
 					case 0:
 						ic.add_pseudo_block(new_blcks_to_net[j][0], b_1);

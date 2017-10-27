@@ -38,9 +38,13 @@ void IC::add_pseudo_block(int blck_id, Blck pblck) {
 	blck_map[blck_id]=pblck;
 }
 
-Blck &IC::get_blck(int id) {
-	return blck_map[id];
+Blck& IC::get_blck(int id) {
+	return (Blck&)blck_map[id];
 }
+
+// void IC::set_pseudo_conn_to_blck() {
+	
+// }
 
 int IC::get_grid_size() {
 	return grid_size;

@@ -54,7 +54,7 @@ float Blck::get_net_weight(int netNum) {
 	if(net_w_expansion.count(netNum)>0) {
 		return net_w_expansion[netNum][0];
 	} else {
-		return -1;
+		return 0;
 	}
 }
 

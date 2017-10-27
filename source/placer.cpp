@@ -108,7 +108,6 @@ int Placer::place(IC &ic, Configholder config) {
 			Ti_t.push_back(blck_to_idx[item[0]]);		// add sum of block egdes to diag;
 			Tj_t.push_back(blck_to_idx[item[0]]);
 			Tx_t.push_back(b.get_total_weight());
-
 			for(i=1 ; i< item.size(); ++i) {
 				for(int bnum : nbs_map[item[i]]) {
 					if(bnum != item[0] && ic.get_blck(bnum).is_fixed()==0) {
@@ -146,8 +145,6 @@ int Placer::place(IC &ic, Configholder config) {
 	Ti=&Ti_t[0];
 	Tj=&Tj_t[0];
 	Tx=&Tx_t[0];
-
-	//printf()
 
 	b_x=&b_x_t[0];
 	b_y=&b_y_t[0];
@@ -223,7 +220,6 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 		last_blck_id=config.get_blck_to_nets()[config.get_blck_to_nets().size()-1][0];
 
-		LOG(INFO) << "Last Blck ID: " << last_blck_id;
 		// fill in pseudos blocks;
 		vector< vector<float> > new_refs;
 		vector<float> refs;
@@ -276,41 +272,45 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		last_net_id=config.get_nbs_map().rbegin()->first + 1;
 
 		for(vector<int> row : config.get_blck_to_nets()) {
-			Blck b = ic.get_blck(row[0]);
+			Blck &b = ic.get_blck(row[0]);
 			if(b.is_fixed()==0 && b.is_pseudo() ==0) {
+				//b.display_blck();
 				if(b.get_x() <= cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, 1, 1);
-					b_1.add_edge_weight(last_net_id, 1, 1);
+					b.add_edge_weight(last_net_id, 2, 1);
+					b_1.add_edge_weight(last_net_id, 2, 1);
 					new_blcks_to_net[0].push_back(last_net_id);
 
 				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, 1, 1);
-					b_2.add_edge_weight(last_net_id, 1, 1);
+					b.add_edge_weight(last_net_id, 2, 1);
+					b_2.add_edge_weight(last_net_id, 2, 1);
 					new_blcks_to_net[1].push_back(last_net_id);
 
 				} else if(b.get_x() <= cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, 1, 1);
-					b_3.add_edge_weight(last_net_id, 1, 1);
+					b.add_edge_weight(last_net_id, 2, 1);
+					b_3.add_edge_weight(last_net_id, 2, 1);
 					new_blcks_to_net[2].push_back(last_net_id);
 
 				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, 1, 1);
-					b_4.add_edge_weight(last_net_id, 1, 1);
+					b.add_edge_weight(last_net_id, 2, 1);
+					b_4.add_edge_weight(last_net_id, 2, 1);
 					new_blcks_to_net[3].push_back(last_net_id);
 
 				} else {
 					LOG(INFO) << "Unclassified";
 				}
 				last_net_id++;
+				// b.display_blck();
+				// cin.ignore();
 			}
 		}
 
 		for(j=0; j<4; ++j) {
 			if(new_blcks_to_net[j].size() > 1) {
+				LOG(INFO) << "quad["<< j <<"] has: " << new_blcks_to_net[j].size();
 				switch(j) {
 					case 0:
 						ic.add_pseudo_block(new_blcks_to_net[j][0], b_1);
@@ -333,9 +333,6 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 
 		// define new
-		if(i*4+1==5) {
-			LOG(ERROR) << "cur_x" << cur_x_cuts[i];
-		}
 		next_x_cuts[0+i*4]=red_frac*cur_x_cuts[i];
 		next_x_cuts[1+i*4]=inc_frac*cur_x_cuts[i];
 		next_x_cuts[2+i*4]=inc_frac*cur_x_cuts[i]; 
@@ -354,11 +351,6 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	// instantiate new cuts;
 	cur_x_cuts=next_x_cuts;
 	cur_y_cuts=next_y_cuts;
-
-	// for(const auto &key : cur_y_cuts) {
-	// 	LOG(DEBUG) << "-- The key is: " <<key.second;
-	// 	cin.ignore();
-	// }
 
 	ic.update_nbs_map(config);
 

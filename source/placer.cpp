@@ -57,6 +57,7 @@ void Placer::calculate_hpwl(IC ic, Configholder config) {
 int Placer::place(IC &ic, Configholder config) {
 
 	int n=config.get_blck_to_nets().size() - config.get_ref_blcks().size();
+	LOG(INFO) << "Number of Blocks " << config.get_blck_to_nets().size();
 	int nz;
 	int * Ti, * Ai;
 	int * Tj, * Ap;
@@ -218,13 +219,15 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 
 		// fill in pseudos blocks;
-		vector<float> new_refs;
+		vector< vector<float> > new_refs;
+		vector<float> refs;
 
 		vector< vector<int> > new_blcks_to_net;
 		vector<int> row;
 		
 		for(j=0; j<4; ++j){
 			new_blcks_to_net.push_back(row);
+			new_refs.push_back(refs);
 		}
 
 
@@ -233,49 +236,37 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		b_1.set_y(cur_y_cuts[i]/2);
 		b_1.set_pseudo();
 
-		new_refs.clear();
-		new_refs.push_back(config.get_blck_to_nets().size());
-		new_refs.push_back(b_1.get_x());
-		new_refs.push_back(b_1.get_y());
+		new_refs[0].push_back(config.get_blck_to_nets().size());
+		new_refs[0].push_back(b_1.get_x());
+		new_refs[0].push_back(b_1.get_y());
 		new_blcks_to_net[0].push_back(config.get_blck_to_nets().size());
-
-		config.add_ref_blck(new_refs);
 
 		b_2.set_x(cur_x_cuts[i]+cur_x_cuts[i]/2);
 		b_2.set_y(cur_y_cuts[i]/2);
 		b_2.set_pseudo();
 
-		new_refs.clear();
-		new_refs.push_back(config.get_blck_to_nets().size()+1);
-		new_refs.push_back(b_2.get_x());
-		new_refs.push_back(b_2.get_y());
+		new_refs[1].push_back(config.get_blck_to_nets().size()+1);
+		new_refs[1].push_back(b_2.get_x());
+		new_refs[1].push_back(b_2.get_y());
 		new_blcks_to_net[1].push_back(config.get_blck_to_nets().size()+1);
-
-		config.add_ref_blck(new_refs);
 
 		b_3.set_x(cur_x_cuts[i]+cur_x_cuts[i]/2);
 		b_3.set_y(cur_y_cuts[i]+cur_y_cuts[i]/2);
 		b_3.set_pseudo();
 
-		new_refs.clear();
-		new_refs.push_back(config.get_blck_to_nets().size()+2);
-		new_refs.push_back(b_3.get_x());
-		new_refs.push_back(b_3.get_y());
+		new_refs[2].push_back(config.get_blck_to_nets().size()+2);
+		new_refs[2].push_back(b_3.get_x());
+		new_refs[2].push_back(b_3.get_y());
 		new_blcks_to_net[2].push_back(config.get_blck_to_nets().size()+2);
-
-		config.add_ref_blck(new_refs);
 
 		b_4.set_x(cur_x_cuts[i]/2);
 		b_4.set_y(cur_y_cuts[i]+cur_y_cuts[i]/2);
 		b_4.set_pseudo();
 
-		new_refs.clear();
-		new_refs.push_back(config.get_blck_to_nets().size()+3);
-		new_refs.push_back(b_4.get_x());
-		new_refs.push_back(b_4.get_y());
+		new_refs[3].push_back(config.get_blck_to_nets().size()+3);
+		new_refs[3].push_back(b_4.get_x());
+		new_refs[3].push_back(b_4.get_y());
 		new_blcks_to_net[3].push_back(config.get_blck_to_nets().size()+3);
-
-		config.add_ref_blck(new_refs);
 
 		// set blcks to classes.
 		last_net_id=config.get_nbs_map().rbegin()->first + 1;
@@ -288,25 +279,25 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 					b.add_edge_weight(last_net_id, 1, 1);
 					b_1.add_edge_weight(last_net_id, 1, 1);
 					new_blcks_to_net[0].push_back(last_net_id);
-					LOG(INFO) << "Class [1]";
+					//LOG(INFO) << "Class [1]";
 				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
 					b.add_edge_weight(last_net_id, 1, 1);
 					b_2.add_edge_weight(last_net_id, 1, 1);
 					new_blcks_to_net[1].push_back(last_net_id);
-					LOG(INFO) << "Class [2]";
+					//LOG(INFO) << "Class [2]";
 				} else if(b.get_x() <= cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
 					b.add_edge_weight(last_net_id, 1, 1);
 					b_3.add_edge_weight(last_net_id, 1, 1);
 					new_blcks_to_net[2].push_back(last_net_id);
-					LOG(INFO) << "Class [4]";
+					//LOG(INFO) << "Class [4]";
 				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
 					b.add_edge_weight(last_net_id, 1, 1);
 					b_4.add_edge_weight(last_net_id, 1, 1);
 					new_blcks_to_net[3].push_back(last_net_id);
-					LOG(INFO) << "Class [3]";
+					//LOG(INFO) << "Class [3]";
 				} else {
 					LOG(INFO) << "Unclassified";
 				}
@@ -331,8 +322,9 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 						break;
 				}
 				config.add_blck_to_net(new_blcks_to_net[j]);
+				config.add_ref_blck(new_refs[j]);
 			} else {
-				LOG(ERROR) << "No config added.";
+				//LOG(ERROR) << "No config added.";
 			}
 		}
 

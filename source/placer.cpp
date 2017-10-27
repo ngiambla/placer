@@ -22,18 +22,19 @@ int solve_equation(int n, int * Ap, int * Ai, double * Ax, double * x, double * 
 }
 
 void Placer::calculate_hpwl(IC ic, Configholder config) {
-	float min_x=ic.get_grid_size(), max_x=0;
-	float min_y=ic.get_grid_size(), max_y=0;
+	float sum=0;
 
-	float bx, by;
+	map<int, vector<int>> nbs_map_t=config.get_nbs_map();
+	for(const auto &key : nbs_map_t) {
+		float min_x=ic.get_grid_size(), max_x=0;
+		float min_y=ic.get_grid_size(), max_y=0;
 
-	for(vector<int> row : config.get_blck_to_nets()) {
-		Blck b=ic.get_blck(row[0]);
-		if(b.is_pseudo() == 0) {
+		float bx, by;
+		
+		for(int i : key.second) {
+			Blck b=ic.get_blck(i);
 			bx=b.get_x();
 			by=b.get_y();
-			
-
 			if(bx<=min_x) { //find min x;
 				min_x=bx;
 			}
@@ -49,9 +50,9 @@ void Placer::calculate_hpwl(IC ic, Configholder config) {
 				max_y=by;
 			}
 		}
+		sum=sum+ (max_x-min_x)+(max_y-min_y);
 	}
-
-	hpwl=(max_x-min_x)+(max_y-min_y);
+	hpwl=sum;
 }
 
 int Placer::place(IC &ic, Configholder config) {
@@ -146,6 +147,8 @@ int Placer::place(IC &ic, Configholder config) {
 	Tj=&Tj_t[0];
 	Tx=&Tx_t[0];
 
+	//printf()
+
 	b_x=&b_x_t[0];
 	b_y=&b_y_t[0];
 
@@ -229,8 +232,6 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 			new_blcks_to_net.push_back(row);
 			new_refs.push_back(refs);
 		}
-
-
 
 		b_1.set_x(cur_x_cuts[i]/2);
 		b_1.set_y(cur_y_cuts[i]/2);

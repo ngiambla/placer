@@ -34,6 +34,7 @@ class Blck {
 		int is_pseudo();
 
 		void display_blck();
+		void display_pos(int id);
 };
 
 #endif

@@ -91,3 +91,7 @@ void Blck::display_blck() {
 	}
 	printf("#####################\n\n");
 }
+
+void Blck::display_pos(int id) {
+	printf("blck [%d] @x[%f]y[%f]\n", id, x,y);
+}

@@ -99,6 +99,7 @@ void initialize_system(char * filename) {
 // main call.
 int main(int argc, char * argv[]) {
 	char filename[20]="../circuits/";
+	char ans;
 	int was_placed=0;
 	int iters=0;
 
@@ -116,6 +117,14 @@ int main(int argc, char * argv[]) {
 				placer.spread(ic, config, iters);
 			}
 			//config.display_config();
+			cout << "-- Press [d] for debugging. Any other key continues. ";
+			cin >> ans;
+			if(ans=='d') {
+				for(vector<int> row : config.get_blck_to_nets()) {
+					ic.get_blck(row[0]).display_pos(row[0]);
+				}
+				cin.ignore();
+			}
 			cin.ignore();
 			++iters;
 		}

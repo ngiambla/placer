@@ -110,10 +110,12 @@ int main(int argc, char * argv[]) {
 
 		while(1) {
 			was_placed=placer.place(ic, config);
+			LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl();
+
 			if(was_placed==1) {
 				placer.spread(ic, config, iters);
 			}
-			LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl();
+			//config.display_config();
 			cin.ignore();
 			++iters;
 		}

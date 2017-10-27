@@ -196,7 +196,8 @@ int Placer::place(IC &ic, Configholder config) {
 //
 int Placer::spread(IC &ic, Configholder &config, int iter) {
 	int spread_status=1;
-	int i=0, last_net_id;
+	int i=0, j=0, last_net_id, last_blck_id;
+
 
 	map<int, float> next_x_cuts;
 	map<int, float> next_y_cuts;
@@ -208,15 +209,25 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 	LOG(INFO) << "Iteration: "<< iter;
 	for(i=0; i<cur_x_cuts.size(); ++i) {
+
 		// define new pseudo blocks for expansion.
 		Blck b_1;
 		Blck b_2;
 		Blck b_3;
 		Blck b_4;
 
-		// fill in pseudos blocks;
 
+		// fill in pseudos blocks;
 		vector<float> new_refs;
+
+		vector< vector<int> > new_blcks_to_net;
+		vector<int> row;
+		
+		for(j=0; j<4; ++j){
+			new_blcks_to_net.push_back(row);
+		}
+
+
 
 		b_1.set_x(cur_x_cuts[i]/2);
 		b_1.set_y(cur_y_cuts[i]/2);
@@ -226,61 +237,105 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		new_refs.push_back(config.get_blck_to_nets().size());
 		new_refs.push_back(b_1.get_x());
 		new_refs.push_back(b_1.get_y());
+		new_blcks_to_net[0].push_back(config.get_blck_to_nets().size());
 
-		//config.add_ref_blck(new_refs);
+		config.add_ref_blck(new_refs);
 
 		b_2.set_x(cur_x_cuts[i]+cur_x_cuts[i]/2);
 		b_2.set_y(cur_y_cuts[i]/2);
 		b_2.set_pseudo();
 
 		new_refs.clear();
-		new_refs.push_back(config.get_blck_to_nets().size());
+		new_refs.push_back(config.get_blck_to_nets().size()+1);
 		new_refs.push_back(b_2.get_x());
 		new_refs.push_back(b_2.get_y());
+		new_blcks_to_net[1].push_back(config.get_blck_to_nets().size()+1);
 
-		//config.add_ref_blck(new_refs);
+		config.add_ref_blck(new_refs);
 
 		b_3.set_x(cur_x_cuts[i]+cur_x_cuts[i]/2);
 		b_3.set_y(cur_y_cuts[i]+cur_y_cuts[i]/2);
 		b_3.set_pseudo();
 
 		new_refs.clear();
-		new_refs.push_back(config.get_blck_to_nets().size());
+		new_refs.push_back(config.get_blck_to_nets().size()+2);
 		new_refs.push_back(b_3.get_x());
 		new_refs.push_back(b_3.get_y());
+		new_blcks_to_net[2].push_back(config.get_blck_to_nets().size()+2);
 
-		//config.add_ref_blck(new_refs);
+		config.add_ref_blck(new_refs);
 
 		b_4.set_x(cur_x_cuts[i]/2);
 		b_4.set_y(cur_y_cuts[i]+cur_y_cuts[i]/2);
 		b_4.set_pseudo();
 
 		new_refs.clear();
-		new_refs.push_back(config.get_blck_to_nets().size());
+		new_refs.push_back(config.get_blck_to_nets().size()+3);
 		new_refs.push_back(b_4.get_x());
 		new_refs.push_back(b_4.get_y());
+		new_blcks_to_net[3].push_back(config.get_blck_to_nets().size()+3);
 
-		//config.add_ref_blck(new_refs);
+		config.add_ref_blck(new_refs);
 
 		// set blcks to classes.
-		last_net_id=config.get_nbs_map().rbegin()->first;
+		last_net_id=config.get_nbs_map().rbegin()->first + 1;
 
 		for(vector<int> row : config.get_blck_to_nets()) {
 			Blck b = ic.get_blck(row[0]);
 			if(b.is_fixed()==0 && b.is_pseudo() ==0) {
 				if(b.get_x() <= cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
+					config.update_blck_to_net(row[0], last_net_id);
+					b.add_edge_weight(last_net_id, 1, 1);
+					b_1.add_edge_weight(last_net_id, 1, 1);
+					new_blcks_to_net[0].push_back(last_net_id);
 					LOG(INFO) << "Class [1]";
 				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
+					config.update_blck_to_net(row[0], last_net_id);
+					b.add_edge_weight(last_net_id, 1, 1);
+					b_2.add_edge_weight(last_net_id, 1, 1);
+					new_blcks_to_net[1].push_back(last_net_id);
 					LOG(INFO) << "Class [2]";
 				} else if(b.get_x() <= cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
+					config.update_blck_to_net(row[0], last_net_id);
+					b.add_edge_weight(last_net_id, 1, 1);
+					b_3.add_edge_weight(last_net_id, 1, 1);
+					new_blcks_to_net[2].push_back(last_net_id);
 					LOG(INFO) << "Class [4]";
 				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
+					config.update_blck_to_net(row[0], last_net_id);
+					b.add_edge_weight(last_net_id, 1, 1);
+					b_4.add_edge_weight(last_net_id, 1, 1);
+					new_blcks_to_net[3].push_back(last_net_id);
 					LOG(INFO) << "Class [3]";
 				} else {
 					LOG(INFO) << "Unclassified";
 				}
+				last_net_id++;
 			}
 		}
+
+		for(j=0; j<4; ++j) {
+			if(new_blcks_to_net[j].size() > 1) {
+				switch(j) {
+					case 0:
+						ic.add_pseudo_block(new_blcks_to_net[j][0], b_1);
+						break;
+					case 1:
+						ic.add_pseudo_block(new_blcks_to_net[j][0], b_2);
+						break;
+					case 2:
+						ic.add_pseudo_block(new_blcks_to_net[j][0], b_3);
+						break;
+					case 3:
+						ic.add_pseudo_block(new_blcks_to_net[j][0], b_4);
+						break;
+				}
+				config.add_blck_to_net(new_blcks_to_net[j]);
+			} else {
+				LOG(ERROR) << "No config added.";
+			}
+		}
+
 
 
 		// define new
@@ -303,6 +358,9 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	// instantiate new cuts;
 	cur_x_cuts=next_x_cuts;
 	cur_y_cuts=next_y_cuts;
+
+	ic.update_nbs_map(config);
+
 	LOG(INFO) << "New cuts to make [x]: " <<cur_x_cuts.size();
 	LOG(INFO) << "New cuts to make [y]: " <<cur_y_cuts.size();
 

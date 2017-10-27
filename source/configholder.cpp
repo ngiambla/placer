@@ -59,4 +59,12 @@ void Configholder::display_config() {
 		}
 		printf("\n");
 	}
+
+	for(vector<float> v: ref_blcks) {
+		for(float i : v){
+
+			printf("%f ", i);
+		}
+		printf("\n");
+	}
 }

@@ -5,7 +5,13 @@ extern "C" {
 }
 
 // void constructors and destructors.
-Placer::Placer() {}
+Placer::Placer() {
+	q1_w=0.5;
+	q2_w=0.5;
+	q3_w=0.5;
+	q4_w=0.5;
+}
+
 Placer::~Placer() {}
 
 
@@ -232,8 +238,8 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 			new_refs.push_back(refs);
 		}
 
-		b_1.set_x(cur_x_cuts[i]-red_frac*cur_x_cuts[i]);
-		b_1.set_y(cur_y_cuts[i]-red_frac*cur_y_cuts[i]);
+		b_1.set_x(red_frac*cur_x_cuts[i]);
+		b_1.set_y(red_frac*cur_y_cuts[i]);
 		b_1.set_pseudo();
 
 		new_refs[0].push_back(config.get_blck_to_nets().size());
@@ -274,37 +280,34 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		for(vector<int> row : config.get_blck_to_nets()) {
 			Blck &b = ic.get_blck(row[0]);
 			if(b.is_fixed()==0 && b.is_pseudo() ==0) {
-				//b.display_blck();
 				if(b.get_x() <= cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, 2, 1);
-					b_1.add_edge_weight(last_net_id, 2, 1);
+					b.add_edge_weight(last_net_id, q1_w, 1);
+					b_1.add_edge_weight(last_net_id, q1_w, 1);
 					new_blcks_to_net[0].push_back(last_net_id);
 
 				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, 2, 1);
-					b_2.add_edge_weight(last_net_id, 2, 1);
+					b.add_edge_weight(last_net_id, q2_w, 1);
+					b_2.add_edge_weight(last_net_id, q2_w, 1);
 					new_blcks_to_net[1].push_back(last_net_id);
 
 				} else if(b.get_x() <= cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, 2, 1);
-					b_3.add_edge_weight(last_net_id, 2, 1);
+					b.add_edge_weight(last_net_id, q3_w, 1);
+					b_3.add_edge_weight(last_net_id, q3_w, 1);
 					new_blcks_to_net[2].push_back(last_net_id);
 
 				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, 2, 1);
-					b_4.add_edge_weight(last_net_id, 2, 1);
+					b.add_edge_weight(last_net_id, q4_w, 1);
+					b_4.add_edge_weight(last_net_id, q4_w, 1);
 					new_blcks_to_net[3].push_back(last_net_id);
 
 				} else {
 					LOG(INFO) << "Unclassified";
 				}
 				last_net_id++;
-				// b.display_blck();
-				// cin.ignore();
 			}
 		}
 
@@ -327,6 +330,17 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 				}
 				config.add_blck_to_net(new_blcks_to_net[j]);
 				config.add_ref_blck(new_refs[j]);
+			} else {
+				switch(j) {
+					case 0:
+						break;
+					case 1:	
+						break;
+					case 2:
+						break;
+					case 3:
+						break;
+				}
 			}
 		}
 

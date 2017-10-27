@@ -14,6 +14,11 @@ class Placer {
 		void find_sys();
 		void calculate_hpwl(IC ic, Configholder config);
 
+		float q1_w;
+		float q2_w;
+		float q3_w;
+		float q4_w;
+
 	public:
 		Placer();
 		~Placer();

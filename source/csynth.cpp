@@ -118,9 +118,9 @@ int main(int argc, char * argv[]) {
 			}
 			//config.display_config();
 
-			// for(vector<int> row : config.get_blck_to_nets()) {
-			// 	ic.get_blck(row[0]).display_pos(row[0]);
-			// }
+			for(vector<int> row : config.get_blck_to_nets()) {
+				ic.get_blck(row[0]).display_pos(row[0]);
+			}
 			cin.ignore();
 			++iters;
 		}

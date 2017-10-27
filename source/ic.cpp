@@ -42,10 +42,6 @@ Blck& IC::get_blck(int id) {
 	return (Blck&)blck_map[id];
 }
 
-// void IC::set_pseudo_conn_to_blck() {
-	
-// }
-
 int IC::get_grid_size() {
 	return grid_size;
 }

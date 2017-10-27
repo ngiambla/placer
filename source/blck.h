@@ -12,6 +12,7 @@ class Blck {
 		float y;
 
 		int isFixed;
+		int isPseudo;
 
 	public:
 		Blck();
@@ -28,6 +29,9 @@ class Blck {
 
 		void set_fixed();
 		int is_fixed();
+
+		void set_pseudo();
+		int is_pseudo();
 
 		void display_blck();
 };

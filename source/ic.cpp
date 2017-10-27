@@ -30,6 +30,24 @@ void IC::display_blcks() {
 	}
 }
 
+// void IC::add_pseudo_block(Blck pblck, Configholder config ) {
+// 	int i=0;
+// 	int size;
+
+// 	nbs_map = config.get_nbs_map();
+	
+// 	// for(vector<int> row : config.get_blck_to_nets()) {
+// 	// 	Blck blck;
+// 	// 	for(i=1; i< row.size(); ++i) {
+// 	// 		size=nbs_map[row[i]].size();
+// 	// 		blck.add_edge_weight(row[i], (float)2/size, size-1);
+// 	// 	}
+// 	// 	blck_map[row[0]]=blck;
+// 	// }
+
+// 	blck_map[blck_map.size()]=pblck;
+// }
+
 Blck &IC::get_blck(int id) {
 	return blck_map[id];
 }

@@ -21,7 +21,7 @@ class Placer {
 		int place(IC &ic, Configholder config);
 		int spread(IC &ic, Configholder &config, int iter);
 		float get_hpwl();
-
+		int snap_to_grid();
 };
 
 #endif

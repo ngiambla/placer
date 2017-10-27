@@ -28,23 +28,26 @@ void Placer::calculate_hpwl(IC ic, Configholder config) {
 	float bx, by;
 
 	for(vector<int> row : config.get_blck_to_nets()) {
-		bx=ic.get_blck(row[0]).get_x();
-		by=ic.get_blck(row[0]).get_y();
-		
+		Blck b=ic.get_blck(row[0]);
+		if(b.is_pseudo() == 0) {
+			bx=b.get_x();
+			by=b.get_y();
+			
 
-		if(bx<=min_x) { //find min x;
-			min_x=bx;
-		}
-		if(by<=min_y) { // find min y;
-			min_y=by;
-		}
+			if(bx<=min_x) { //find min x;
+				min_x=bx;
+			}
+			if(by<=min_y) { // find min y;
+				min_y=by;
+			}
 
-		if(bx>=max_x) { // find max x;
-			max_x=bx;
-		}
+			if(bx>=max_x) { // find max x;
+				max_x=bx;
+			}
 
-		if(by>=min_y) { // find max y;
-			max_y=by;
+			if(by>=min_y) { // find max y;
+				max_y=by;
+			}
 		}
 	}
 
@@ -193,7 +196,7 @@ int Placer::place(IC &ic, Configholder config) {
 //
 int Placer::spread(IC &ic, Configholder &config, int iter) {
 	int spread_status=1;
-	int i=0;
+	int i=0, last_net_id;
 
 	map<int, float> next_x_cuts;
 	map<int, float> next_y_cuts;
@@ -213,36 +216,69 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 		// fill in pseudos blocks;
 
+		vector<float> new_refs;
+
 		b_1.set_x(cur_x_cuts[i]/2);
 		b_1.set_y(cur_y_cuts[i]/2);
-		b_1.set_fixed();
+		b_1.set_pseudo();
+
+		new_refs.clear();
+		new_refs.push_back(config.get_blck_to_nets().size());
+		new_refs.push_back(b_1.get_x());
+		new_refs.push_back(b_1.get_y());
+
+		//config.add_ref_blck(new_refs);
 
 		b_2.set_x(cur_x_cuts[i]+cur_x_cuts[i]/2);
 		b_2.set_y(cur_y_cuts[i]/2);
-		b_2.set_fixed();
+		b_2.set_pseudo();
+
+		new_refs.clear();
+		new_refs.push_back(config.get_blck_to_nets().size());
+		new_refs.push_back(b_2.get_x());
+		new_refs.push_back(b_2.get_y());
+
+		//config.add_ref_blck(new_refs);
 
 		b_3.set_x(cur_x_cuts[i]+cur_x_cuts[i]/2);
 		b_3.set_y(cur_y_cuts[i]+cur_y_cuts[i]/2);
-		b_3.set_fixed();
+		b_3.set_pseudo();
+
+		new_refs.clear();
+		new_refs.push_back(config.get_blck_to_nets().size());
+		new_refs.push_back(b_3.get_x());
+		new_refs.push_back(b_3.get_y());
+
+		//config.add_ref_blck(new_refs);
 
 		b_4.set_x(cur_x_cuts[i]/2);
 		b_4.set_y(cur_y_cuts[i]+cur_y_cuts[i]/2);
-		b_4.set_fixed();
+		b_4.set_pseudo();
+
+		new_refs.clear();
+		new_refs.push_back(config.get_blck_to_nets().size());
+		new_refs.push_back(b_4.get_x());
+		new_refs.push_back(b_4.get_y());
+
+		//config.add_ref_blck(new_refs);
 
 		// set blcks to classes.
+		last_net_id=config.get_nbs_map().rbegin()->first;
 
 		for(vector<int> row : config.get_blck_to_nets()) {
 			Blck b = ic.get_blck(row[0]);
-			if(b.get_x() <= cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
-				LOG(INFO) << "Class [1]";
-			} else if(b.get_x() > cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
-				LOG(INFO) << "Class [2]";
-			} else if(b.get_x() <= cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
-				LOG(INFO) << "Class [4]";
-			} else if(b.get_x() > cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
-				LOG(INFO) << "Class [3]";
-			} else {
-				LOG(INFO) << "Unclassified";
+			if(b.is_fixed()==0 && b.is_pseudo() ==0) {
+				if(b.get_x() <= cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
+					LOG(INFO) << "Class [1]";
+				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
+					LOG(INFO) << "Class [2]";
+				} else if(b.get_x() <= cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
+					LOG(INFO) << "Class [4]";
+				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
+					LOG(INFO) << "Class [3]";
+				} else {
+					LOG(INFO) << "Unclassified";
+				}
 			}
 		}
 
@@ -277,4 +313,8 @@ float Placer::get_hpwl() {
 	return hpwl;
 }
 
+
+int Placer::snap_to_grid() {
+	return 0;
+}
 

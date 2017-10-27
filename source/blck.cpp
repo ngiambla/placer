@@ -3,6 +3,7 @@
 
 //constructor
 Blck::Blck() {
+	isPseudo=0;
 	isFixed=0;
 	x=UNKNOWN;
 	y=UNKNOWN;
@@ -24,6 +25,15 @@ void Blck::set_fixed() {
 
 int Blck::is_fixed() {
 	return isFixed;
+}
+
+void Blck::set_pseudo() {
+	isPseudo=1;
+	isFixed=1;
+}
+
+int Blck::is_pseudo() {
+	return isPseudo;
 }
 
 void Blck::set_x(float x) {

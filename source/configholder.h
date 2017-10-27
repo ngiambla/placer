@@ -21,6 +21,7 @@ class Configholder {
 		map<int, vector<int> > get_nbs_map();
 		int get_grid_size();
 		void display_config();
+		void update_blck_to_net(int blckid, int netnum);
 
 };
 

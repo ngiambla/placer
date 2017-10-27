@@ -17,7 +17,7 @@ class IC {
 		IC(Configholder config);
 		void display_blcks();
 		Blck &get_blck(int id);
-		void add_pseudo_block(Blck blck);
+		//void add_pseudo_block(Blck blck, Configholder config);
 		int get_grid_size();
 
 };

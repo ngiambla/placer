@@ -26,7 +26,13 @@ void Configholder::add_blck_to_net(vector<int> blck_to_net) {
 }
 
 void Configholder::update_blck_to_net(int blckid, int netnum) {
-	blck_to_nets[blckid].push_back(netnum);
+	int i=0;
+	for(vector<int> vec: blck_to_nets) {
+		if(vec[0]==blckid){
+			blck_to_nets[i].push_back(netnum);
+		}
+		++i;
+	}
 }
 
 void Configholder::add_ref_blck(vector<float> ref_blck) {

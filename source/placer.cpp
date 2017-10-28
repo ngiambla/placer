@@ -7,10 +7,10 @@ extern "C" {
 
 // void constructors and destructors.
 Placer::Placer() {
-	q1_w=0.5;
-	q2_w=0.5;
-	q3_w=0.5;
-	q4_w=0.5;
+	q1_w=5;
+	q2_w=5;
+	q3_w=5;
+	q4_w=5;
 }
 
 Placer::~Placer() {}
@@ -110,11 +110,13 @@ int Placer::place(IC &ic, Configholder config) {
 
 	for(vector<int> item : blck_to_nets){				// get blck, and check connected nets
 		Blck b = ic.get_blck(item[0]);					// extract blck from ic
+
 		if(b.is_fixed() == 0) {							// make sure it is not fixed (not included in the matrix to solve)
 
 			Ti_t.push_back(blck_to_idx[item[0]]);		// add sum of block egdes to diag;
 			Tj_t.push_back(blck_to_idx[item[0]]);
 			Tx_t.push_back(b.get_total_weight());
+
 			for(i=1 ; i< item.size(); ++i) {
 				for(int bnum : nbs_map[item[i]]) {
 					if(bnum != item[0] && ic.get_blck(bnum).is_fixed()==0) {
@@ -204,7 +206,12 @@ int Placer::place(IC &ic, Configholder config) {
 //
 int Placer::spread(IC &ic, Configholder &config, int iter) {
 	int spread_status=1;
+	int init_run=0;
 	int i=0, j=0, last_net_id, last_blck_id;
+
+	float num_of_mv_blcks_per_quad=(float)(config.get_blck_to_nets().size()-config.get_ref_blcks().size())/4;
+
+	LOG(INFO) << "Number of Moveable blocks per quad: "<<num_of_mv_blcks_per_quad;
 
 	map<int, float> next_x_cuts;
 	map<int, float> next_y_cuts;
@@ -215,14 +222,10 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	}
 
 	double resize_inc=(float)ic.get_grid_size()/pow(2,iter+1);
-	LOG(INFO) << "#################["<<resize_inc<< "]#######################";
 
-	LOG(INFO) << "Iteration: "<< iter;
 	for(i=0; i<cur_x_cuts.size(); ++i) {
-		// define new pseudo blocks for expansion.
-		LOG(INFO) << "cur_x_cuts["<<i<<"]="<<cur_x_cuts[i];
-		LOG(INFO) << "cur_y_cuts["<<i<<"]="<<cur_y_cuts[i];
 
+		// define new pseudo blocks for expansion.
 		Blck b_1;
 		Blck b_2;
 		Blck b_3;
@@ -285,32 +288,39 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 			Blck &b = ic.get_blck(row[0]);
 			if(b.is_fixed()==0 && b.is_pseudo() ==0) {
 
-				if(iter==1) {
-					default_random_engine generator;
-					uniform_real_distribution<double> distribution(0.0,0.5);
-					b.set_x(b.get_x()+(distribution(generator)));
-					b.set_y(b.get_y()+(distribution(generator)));
-				}
+				// if(init_run==0) {
+				// 	default_random_engine generator;
+				// 	uniform_real_distribution<double> x_dist(b.get_x(),1/iter);
+				// 	b.set_x(abs(x_dist(generator)));
+
+				// 	uniform_real_distribution<double> y_dist(b.get_y(),1/iter);
+				// 	b.set_y(abs(y_dist(generator)));
+				// 	init_run=1;
+				// }
 
 				if(b.get_x() <= cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
+
 					config.update_blck_to_net(row[0], last_net_id);
 					b.add_edge_weight(last_net_id, q1_w, 1);
 					b_1.add_edge_weight(last_net_id, q1_w, 1);
 					new_blcks_to_net[0].push_back(last_net_id);
 
 				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
+
 					config.update_blck_to_net(row[0], last_net_id);
 					b.add_edge_weight(last_net_id, q2_w, 1);
 					b_2.add_edge_weight(last_net_id, q2_w, 1);
 					new_blcks_to_net[1].push_back(last_net_id);
 
 				} else if(b.get_x() <= cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
+
 					config.update_blck_to_net(row[0], last_net_id);
 					b.add_edge_weight(last_net_id, q3_w, 1);
 					b_3.add_edge_weight(last_net_id, q3_w, 1);
 					new_blcks_to_net[2].push_back(last_net_id);
 
 				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
+
 					config.update_blck_to_net(row[0], last_net_id);
 					b.add_edge_weight(last_net_id, q4_w, 1);
 					b_4.add_edge_weight(last_net_id, q4_w, 1);
@@ -325,7 +335,6 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 		for(j=0; j<4; ++j) {
 			if(new_blcks_to_net[j].size() > 1) {
-				LOG(INFO) << "quad["<< j <<"] has: " << new_blcks_to_net[j].size();
 				switch(j) {
 					case 0:
 						ic.add_pseudo_block(new_blcks_to_net[j][0], b_1);
@@ -342,17 +351,6 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 				}
 				config.add_blck_to_net(new_blcks_to_net[j]);
 				config.add_ref_blck(new_refs[j]);
-			} else {
-				switch(j) {
-					case 0:
-						break;
-					case 1:	
-						break;
-					case 2:
-						break;
-					case 3:
-						break;
-				}
 			}
 		}
 

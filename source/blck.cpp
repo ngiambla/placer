@@ -101,7 +101,7 @@ void Blck::display_blck() {
 
 void Blck::display_pos(int id) {
 	if(isPseudo==1) {
-		printf("blck [%d] @x[%f]y[%f] __.*\n", id, x,y);
+		//printf("blck [%d] @x[%f]y[%f] __.*\n", id, x,y);
 	} else {
 		printf("blck [%d] @x[%f]y[%f]\n", id, x,y);
 	}

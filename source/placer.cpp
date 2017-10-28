@@ -206,20 +206,23 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	int spread_status=1;
 	int i=0, j=0, last_net_id, last_blck_id;
 
-	float red_frac= 0.5*(1/(float)iter);
-	float inc_frac= 1.5*(1/(float)iter); 
-
 	map<int, float> next_x_cuts;
 	map<int, float> next_y_cuts;
 
-	if(iter-1==0) {
+	if(iter==1) {
 		cur_x_cuts[0]=(float)ic.get_grid_size()/2;
 		cur_y_cuts[0]=(float)ic.get_grid_size()/2;
 	}
 
+	double resize_inc=(float)ic.get_grid_size()/pow(2,iter+1);
+	LOG(INFO) << "#################["<<resize_inc<< "]#######################";
+
 	LOG(INFO) << "Iteration: "<< iter;
 	for(i=0; i<cur_x_cuts.size(); ++i) {
 		// define new pseudo blocks for expansion.
+		LOG(INFO) << "cur_x_cuts["<<i<<"]="<<cur_x_cuts[i];
+		LOG(INFO) << "cur_y_cuts["<<i<<"]="<<cur_y_cuts[i];
+
 		Blck b_1;
 		Blck b_2;
 		Blck b_3;
@@ -239,38 +242,38 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 			new_refs.push_back(refs);
 		}
 
-		b_1.set_x(red_frac*cur_x_cuts[i]);
-		b_1.set_y(red_frac*cur_y_cuts[i]);
+		b_1.set_x(cur_x_cuts[i]-resize_inc);
+		b_1.set_y(cur_y_cuts[i]-resize_inc);
 		b_1.set_pseudo();
 
-		new_refs[0].push_back(config.get_blck_to_nets().size());
+		new_refs[0].push_back(last_blck_id+1);
 		new_refs[0].push_back(b_1.get_x());
 		new_refs[0].push_back(b_1.get_y());
 		new_blcks_to_net[0].push_back(last_blck_id+1);
 
-		b_2.set_x(inc_frac*cur_x_cuts[i]);
-		b_2.set_y(red_frac*cur_y_cuts[i]);
+		b_2.set_x(cur_x_cuts[i]+resize_inc);
+		b_2.set_y(cur_y_cuts[i]-resize_inc);
 		b_2.set_pseudo();
 
-		new_refs[1].push_back(config.get_blck_to_nets().size()+1);
+		new_refs[1].push_back(last_blck_id+2);
 		new_refs[1].push_back(b_2.get_x());
 		new_refs[1].push_back(b_2.get_y());
 		new_blcks_to_net[1].push_back(last_blck_id+2);
 
-		b_3.set_x(inc_frac*cur_x_cuts[i]);
-		b_3.set_y(inc_frac*cur_y_cuts[i]);
+		b_3.set_x(cur_x_cuts[i]+resize_inc);
+		b_3.set_y(cur_y_cuts[i]+resize_inc);
 		b_3.set_pseudo();
 
-		new_refs[2].push_back(config.get_blck_to_nets().size()+2);
+		new_refs[2].push_back(last_blck_id+3);
 		new_refs[2].push_back(b_3.get_x());
 		new_refs[2].push_back(b_3.get_y());
 		new_blcks_to_net[2].push_back(last_blck_id+3);
 
-		b_4.set_x(red_frac*cur_x_cuts[i]);
-		b_4.set_y(inc_frac*cur_y_cuts[i]);
+		b_4.set_x(cur_x_cuts[i]-resize_inc);
+		b_4.set_y(cur_y_cuts[i]+resize_inc);
 		b_4.set_pseudo();
 
-		new_refs[3].push_back(config.get_blck_to_nets().size()+3);
+		new_refs[3].push_back(last_blck_id+4);
 		new_refs[3].push_back(b_4.get_x());
 		new_refs[3].push_back(b_4.get_y());
 		new_blcks_to_net[3].push_back(last_blck_id+4);
@@ -281,12 +284,14 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		for(vector<int> row : config.get_blck_to_nets()) {
 			Blck &b = ic.get_blck(row[0]);
 			if(b.is_fixed()==0 && b.is_pseudo() ==0) {
+
 				if(iter==1) {
 					default_random_engine generator;
-					normal_distribution<double> distribution(0.0, 1.0);
-					b.set_x(b.get_x()+distribution(generator));
-					b.set_y(b.get_y()+distribution(generator));
+					uniform_real_distribution<double> distribution(0.0,0.5);
+					b.set_x(b.get_x()+(distribution(generator)));
+					b.set_y(b.get_y()+(distribution(generator)));
 				}
+
 				if(b.get_x() <= cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
 					b.add_edge_weight(last_net_id, q1_w, 1);
@@ -354,15 +359,15 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 
 		// define new
-		next_x_cuts[0+i*4]=red_frac*cur_x_cuts[i];
-		next_x_cuts[1+i*4]=inc_frac*cur_x_cuts[i];
-		next_x_cuts[2+i*4]=inc_frac*cur_x_cuts[i]; 
-		next_x_cuts[3+i*4]=red_frac*cur_x_cuts[i];
+		next_x_cuts[0+i*4]=cur_x_cuts[i]-resize_inc;
+		next_x_cuts[1+i*4]=cur_x_cuts[i]+resize_inc;
+		next_x_cuts[2+i*4]=cur_x_cuts[i]-resize_inc; 
+		next_x_cuts[3+i*4]=cur_x_cuts[i]+resize_inc;
 
-		next_y_cuts[0+i*4]=red_frac*cur_y_cuts[i];
-		next_y_cuts[1+i*4]=red_frac*cur_y_cuts[i];
-		next_y_cuts[2+i*4]=inc_frac*cur_y_cuts[i];
-		next_y_cuts[3+i*4]=inc_frac*cur_y_cuts[i];
+		next_y_cuts[0+i*4]=cur_y_cuts[i]-resize_inc;
+		next_y_cuts[1+i*4]=cur_y_cuts[i]-resize_inc;
+		next_y_cuts[2+i*4]=cur_y_cuts[i]+resize_inc;
+		next_y_cuts[3+i*4]=cur_y_cuts[i]+resize_inc;
 
 	}
 	// purge cuts;

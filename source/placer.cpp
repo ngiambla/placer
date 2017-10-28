@@ -3,6 +3,7 @@
 extern "C" {
 	#include "umfpack.h"
 }
+#include <random>
 
 // void constructors and destructors.
 Placer::Placer() {
@@ -280,6 +281,12 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		for(vector<int> row : config.get_blck_to_nets()) {
 			Blck &b = ic.get_blck(row[0]);
 			if(b.is_fixed()==0 && b.is_pseudo() ==0) {
+				if(iter==1) {
+					default_random_engine generator;
+					normal_distribution<double> distribution(0.0, 1.0);
+					b.set_x(b.get_x()+distribution(generator));
+					b.set_y(b.get_y()+distribution(generator));
+				}
 				if(b.get_x() <= cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
 					config.update_blck_to_net(row[0], last_net_id);
 					b.add_edge_weight(last_net_id, q1_w, 1);
@@ -313,7 +320,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 		for(j=0; j<4; ++j) {
 			if(new_blcks_to_net[j].size() > 1) {
-				//LOG(INFO) << "quad["<< j <<"] has: " << new_blcks_to_net[j].size();
+				LOG(INFO) << "quad["<< j <<"] has: " << new_blcks_to_net[j].size();
 				switch(j) {
 					case 0:
 						ic.add_pseudo_block(new_blcks_to_net[j][0], b_1);

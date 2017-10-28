@@ -58,6 +58,13 @@ float Blck::get_net_weight(int netNum) {
 	}
 }
 
+void Blck::update_net_weight(int netNum, float weight) {
+	int i;
+	for(i=0; i<net_w_expansion[netNum].size(); ++i) {
+		net_w_expansion[netNum][i]=weight;
+	}
+}
+
 void Blck::add_edge_weight(int netNum, float weight, int howmany) {
 	int i;
 	vector<float> weights;

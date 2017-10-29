@@ -7,10 +7,10 @@ extern "C" {
 
 // void constructors and destructors.
 Placer::Placer() {
-	q1_w=5;
-	q2_w=5;
-	q3_w=5;
-	q4_w=5;
+	q1_w=10;
+	q2_w=10;
+	q3_w=10;
+	q4_w=10;
 }
 
 Placer::~Placer() {}
@@ -30,7 +30,7 @@ int solve_equation(int n, int * Ap, int * Ai, double * Ax, double * x, double * 
 
 void Placer::calculate_hpwl(IC ic, Configholder config) {
 	float sum=0;
-
+	int should_add;
 	map<int, vector<int>> nbs_map_t=config.get_nbs_map();
 	for(const auto &key : nbs_map_t) {
 		float min_x=ic.get_grid_size(), max_x=0;
@@ -40,24 +40,30 @@ void Placer::calculate_hpwl(IC ic, Configholder config) {
 		
 		for(int i : key.second) {
 			Blck b=ic.get_blck(i);
-			bx=b.get_x();
-			by=b.get_y();
-			if(bx<=min_x) { //find min x;
-				min_x=bx;
-			}
-			if(by<=min_y) { // find min y;
-				min_y=by;
-			}
+			if(b.is_pseudo()==0) {
+				bx=b.get_x();
+				by=b.get_y();
+				if(bx<=min_x) { //find min x;
+					min_x=bx;
+				}
+				if(by<=min_y) { // find min y;
+					min_y=by;
+				}
 
-			if(bx>=max_x) { // find max x;
-				max_x=bx;
-			}
+				if(bx>=max_x) { // find max x;
+					max_x=bx;
+				}
 
-			if(by>=min_y) { // find max y;
-				max_y=by;
+				if(by>=min_y) { // find max y;
+					max_y=by;
+				}
 			}
 		}
-		sum=sum+ (max_x-min_x)+(max_y-min_y);
+		if(max_x==0 && max_y==0 && min_x == ic.get_grid_size() && min_y == ic.get_grid_size()) {
+
+		} else {
+			sum=sum+ (max_x-min_x)+(max_y-min_y);
+		}
 	}
 	hpwl=sum;
 }
@@ -225,6 +231,9 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 	for(i=0; i<cur_x_cuts.size(); ++i) {
 
+		// define class holders;
+		map<int, int> c1, c2, c3, c4;
+
 		// define new pseudo blocks for expansion.
 		Blck b_1;
 		Blck b_2;
@@ -232,7 +241,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		Blck b_4;
 
 		last_blck_id=config.get_blck_to_nets()[config.get_blck_to_nets().size()-1][0];
-
+		printf("Spreading: %3.2f%%\r", (float)100*i/cur_x_cuts.size());
 		// fill in pseudos blocks;
 		vector< vector<float> > new_refs;
 		vector<float> refs;
@@ -288,15 +297,15 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 			Blck &b = ic.get_blck(row[0]);
 			if(b.is_fixed()==0 && b.is_pseudo() ==0) {
 
-				// if(init_run==0) {
-				// 	default_random_engine generator;
-				// 	uniform_real_distribution<double> x_dist(b.get_x(),1/iter);
-				// 	b.set_x(abs(x_dist(generator)));
+				if(init_run==0) {
+					default_random_engine generator;
+					uniform_real_distribution<double> x_dist(b.get_x(),1);
+					b.set_x(abs(x_dist(generator)));
 
-				// 	uniform_real_distribution<double> y_dist(b.get_y(),1/iter);
-				// 	b.set_y(abs(y_dist(generator)));
-				// 	init_run=1;
-				// }
+					uniform_real_distribution<double> y_dist(b.get_y(),1);
+					b.set_y(abs(y_dist(generator)));
+					init_run=1;
+				}
 
 				if(b.get_x() <= cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
 
@@ -330,6 +339,11 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 					LOG(INFO) << "Unclassified";
 				}
 				last_net_id++;
+
+			} else if(b.is_pseudo()==1) {
+				if(i==0) {
+					b.update_pseudo_blck_weight();			
+				}
 			}
 		}
 
@@ -368,6 +382,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		next_y_cuts[3+i*4]=cur_y_cuts[i]+resize_inc;
 
 	}
+	printf("\n");
 	// purge cuts;
 	cur_y_cuts.clear();
 	cur_x_cuts.clear();
@@ -377,6 +392,11 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	cur_y_cuts=next_y_cuts;
 
 	ic.update_nbs_map(config);
+
+	q1_w*=4;
+	q2_w*=4;
+	q3_w*=4;
+	q4_w*=4;
 
 	LOG(INFO) << "New cuts to make [x]: " <<cur_x_cuts.size();
 	LOG(INFO) << "New cuts to make [y]: " <<cur_y_cuts.size();

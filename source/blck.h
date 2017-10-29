@@ -24,7 +24,7 @@ class Blck {
 		void set_y(float y);
 
 		float get_net_weight(int netNum);
-		void update_net_weight(int netNum, float weight);
+		void update_pseudo_blck_weight();
 
 		void add_edge_weight(int netNum, float weight, int howmany);
 		float get_total_weight();

@@ -58,10 +58,14 @@ float Blck::get_net_weight(int netNum) {
 	}
 }
 
-void Blck::update_net_weight(int netNum, float weight) {
+void Blck::update_pseudo_blck_weight() {
 	int i;
-	for(i=0; i<net_w_expansion[netNum].size(); ++i) {
-		net_w_expansion[netNum][i]=weight;
+	for(const auto& key : net_w_expansion) {
+		for(i=0; i<net_w_expansion[key.first].size(); ++i) {
+			if(net_w_expansion[key.first][i]> 1) {
+				net_w_expansion[key.first][i]*=0.5;
+			}
+		}
 	}
 }
 

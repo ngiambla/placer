@@ -3,7 +3,9 @@
 /* sets configholder's state to represent 
 the block to nets (for connections) */
 void Configholder::add_blck_to_net(vector<int> blck_to_net) {
+
 	blck_to_nets.push_back(blck_to_net);
+
 	int i=0;
 	for(int item : blck_to_net) {
 		if(item ==0 ) {

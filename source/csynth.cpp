@@ -111,16 +111,18 @@ int main(int argc, char * argv[]) {
 
 		while(1) {
 			was_placed=placer.place(ic, config);
-			LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl();
-
-			if(was_placed==1) {
-				placer.spread(ic, config, iters);
-			}
-			//config.display_config();
-
 			for(vector<int> row : config.get_blck_to_nets()) {
 				ic.get_blck(row[0]).display_pos(row[0]);
 			}
+			LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl() << "\n";
+
+			if(was_placed==1) {
+				LOG(INFO) << "..-* Spreading iter["<<iters<<"] *-..";
+
+				placer.spread(ic, config, iters);
+				LOG(INFO) << "..-* Spreading Complete. *-..";
+			}
+
 			cin.ignore();
 			++iters;
 		}

@@ -7,10 +7,10 @@ extern "C" {
 
 // void constructors and destructors.
 Placer::Placer() {
-	q1_w=1;
-	q2_w=1;
-	q3_w=1;
-	q4_w=1;
+	q1_w=100;
+	q2_w=100;
+	q3_w=100;
+	q4_w=100;
 }
 
 Placer::~Placer() {}
@@ -309,78 +309,61 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 			Blck &blck_to_add=ic.get_blck(bid);
 
-  			for(k=0; k<pow(2, iter+1); ++k) {
-	  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to()==k || blck_to_add.belongs_to()==-2)) {
+  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to()==i || blck_to_add.belongs_to() == -2) && blck_to_add.is_stale()==0) {
+				
+				discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
+				int potential_class=distribution(generator);
 
-	  				// LOG(INFO) << "How Many? : " <<pow(2,iter);
-	  				// LOG(INFO) << "Blck belongs to group: " << blck_to_add.belongs_to();
-	  				// LOG(INFO) << "i: "<< i;
-	  				// LOG(INFO) << "k: " << k;
-					
-					discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
-  					int potential_class=distribution(generator);
+	  			switch(potential_class) {
+	  				case 0:
+	  					class_to_blck[0].push_back(bid);
+	  					blck_to_add.set_to_group((i-i%4)*4);
+	  					if(wc1==2) {
+	  						wc1=1;
+	  					}
+	  					wc2=2;
+	  					wc3=2;
+	  					wc4=2;
+	  					break;
+	  				case 1:
+	  					class_to_blck[1].push_back(bid);
+	  					blck_to_add.set_to_group((i+1-i%4)*4);
+	  					if(wc2==2) {
+	  						wc2=1;
+	  					}
+	  					wc1=2;
+	  					wc3=2;
+	  					wc4=2; 
+	  					break;
+	  				case 2:
+	  					class_to_blck[2].push_back(bid);
+	  					blck_to_add.set_to_group((i+2-i%4)*4);
 
-	  				//cin.ignore();
-		  			switch(potential_class) {
-		  				case 0:
-		  					class_to_blck[0].push_back(bid);
-		  					blck_to_add.set_to_group(k);
-		  					if(wc1==2) {
-		  						wc1=1;
-		  					}
-		  					wc2=2;
-		  					wc3=2;
-		  					wc4=2;
-		  					k=(int)pow(2, iter+1)+1;
-		  					break;
-		  				case 1:
-		  					class_to_blck[1].push_back(bid);
-		  					blck_to_add.set_to_group(k+1);
-		  					if(wc2==2) {
-		  						wc2=1;
-		  					}
-		  					wc1=2;
-		  					wc3=2;
-		  					wc4=2; 
-		  					k=(int)pow(2, iter+1)+1;
-		  					break;
-		  				case 2:
-		  					class_to_blck[2].push_back(bid);
-		  					blck_to_add.set_to_group(k+2);
+	  					if(wc3==2) {
+	  						wc3=1;
+	  					}
+	  					wc1=2;
+	  					wc2=2;
+	  					wc4=2; 
+	  					break;
+	  				case 3:
+	  					class_to_blck[3].push_back(bid);
+	  					blck_to_add.set_to_group((i+3-i%4)*4);
 
-		  					if(wc3==2) {
-		  						wc3=1;
-		  					}
-		  					wc1=2;
-		  					wc2=2;
-		  					wc4=2; 
-		  					k=(int)pow(2, iter+1)+1;
-		  					break;
-		  				case 3:
-		  					class_to_blck[3].push_back(bid);
-		  					blck_to_add.set_to_group(k+3);
-
-		  					if(wc4==2) {
-		  						wc4=1;
-		  					}
-		  					wc1=2;
-		  					wc2=2;
-		  					wc3=2; 
-		  					k=(int)pow(2, iter+1)+1;
-		  					break;
-		  			}
-	  			} else if(blck_to_add.is_pseudo()==0) {
-	  				if(i==0){
-	 	 				blck_to_add.update_pseudo_blck_weight();
-	  				}
+	  					if(wc4==2) {
+	  						wc4=1;
+	  					}
+	  					wc1=2;
+	  					wc2=2;
+	  					wc3=2; 
+	  					break;
 	  			}
-	  			if(iter==1) {
-	  				break;
-	  			}
-  			}
 
-
+			} else if(blck_to_add.is_pseudo()==1) {
+ 				blck_to_add.update_pseudo_blck_weight();
+			}
 		}
+
   		for(j=0;j<4;++j) {
   			for(int bid : class_to_blck[j]) {
   				Blck &b = ic.get_blck(bid);
@@ -453,16 +436,16 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		next_y_cuts[2+i*4]=cur_y_cuts[i]+resize_inc;
 		next_y_cuts[3+i*4]=cur_y_cuts[i]+resize_inc;
 
-		// LOG(INFO) << abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
-		// LOG(INFO) << abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
-		// LOG(INFO) << abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
-		// LOG(INFO) << abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
 
+		q1_w*=abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
+		q2_w*=abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
+		q3_w*=abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
+		q4_w*=abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
 
-		q1_w*=0.5*abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
-		q2_w*=0.5*abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
-		q3_w*=0.5*abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
-		q4_w*=0.5*abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
+		q1_w+=10;
+		q2_w+=10;
+		q3_w+=10;
+		q4_w+=10;
 
 	}
 	printf("\n");

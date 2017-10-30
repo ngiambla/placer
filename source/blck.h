@@ -14,7 +14,7 @@ class Blck {
 		int isFixed;
 		int isPseudo;
 
-		int history;
+		map<int, int> net_history;
 		int classNum;
 		int isStale;
 
@@ -42,6 +42,7 @@ class Blck {
 		int belongs_to();
 		void set_to_group(int group_id);
 		void refresh();
+		int is_stale();
 
 		void display_blck();
 		void display_pos(int id);

@@ -7,10 +7,10 @@ extern "C" {
 
 // void constructors and destructors.
 Placer::Placer() {
-	q1_w=20;
-	q2_w=20;
-	q3_w=20;
-	q4_w=20;
+	q1_w=50;
+	q2_w=50;
+	q3_w=50;
+	q4_w=50;
 }
 
 Placer::~Placer() {}
@@ -352,10 +352,10 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
   			for(int bid : class_to_blck[j]) {
   				Blck &b = ic.get_blck(bid);
 				// if(init_run==0) {
-					uniform_real_distribution<double> x_dist(b.get_x(),1.5/iter);
+					uniform_real_distribution<double> x_dist(b.get_x(),1);
 					b.set_x(abs(x_dist(generator)));
 
-					uniform_real_distribution<double> y_dist(b.get_y(),1.5/iter);
+					uniform_real_distribution<double> y_dist(b.get_y(),1);
 					b.set_y(abs(y_dist(generator)));
 				// 	init_run=1;
 				// }
@@ -419,10 +419,10 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		next_y_cuts[2+i*4]=cur_y_cuts[i]+resize_inc;
 		next_y_cuts[3+i*4]=cur_y_cuts[i]+resize_inc;
 
-		q1_w*=abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad)+0.5; 
-		q2_w*=abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad)+0.5; 
-		q3_w*=abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad)+0.5; 
-		q4_w*=abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad)+0.5; 
+		q1_w*=abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
+		q2_w*=abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
+		q3_w*=abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
+		q4_w*=abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
 
 	}
 	printf("\n");

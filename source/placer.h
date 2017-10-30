@@ -26,7 +26,8 @@ class Placer {
 		int place(IC &ic, Configholder config);
 		int spread(IC &ic, Configholder &config, int iter);
 		float get_hpwl();
-		int snap_to_grid();
+		int is_grid_congested(IC ic, Configholder config);
+		int snap_to_grid(IC &ic, Configholder config);
 };
 
 #endif

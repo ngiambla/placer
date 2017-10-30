@@ -5,6 +5,7 @@
 Blck::Blck() {
 	isPseudo=0;
 	isFixed=0;
+	history=0;
 	x=UNKNOWN;
 	y=UNKNOWN;
 }
@@ -62,11 +63,11 @@ void Blck::update_pseudo_blck_weight() {
 	int i;
 	for(const auto& key : net_w_expansion) {
 		for(i=0; i<net_w_expansion[key.first].size(); ++i) {
-			if(history == 2) {
-				net_w_expansion[key.first][i]*=0.9;
+			if(history == 3) {
+				net_w_expansion[key.first][i]*=0.95;
 			} else {
+				net_w_expansion[key.first][i]*=2;
 				++history;
-				net_w_expansion[key.first][i]*=4;
 			}
 		}
 	}

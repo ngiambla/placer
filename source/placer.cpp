@@ -344,38 +344,42 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	  					break;
 	  			}
   			} else if(blck_to_add.is_pseudo()==0) {
-  				blck_to_add.update_pseudo_blck_weight();
+  				if(i==0){
+ 	 				blck_to_add.update_pseudo_blck_weight();
+  				}
   			}
 		}
   		for(j=0;j<4;++j) {
   			for(int bid : class_to_blck[j]) {
   				Blck &b = ic.get_blck(bid);
-				// if(init_run==0) {
-					uniform_real_distribution<double> x_dist(b.get_x(),1);
-					b.set_x(abs(x_dist(generator)));
+				
+				uniform_real_distribution<double> x_dist(b.get_x(),1);
+				b.set_x(abs(x_dist(generator)));
 
-					uniform_real_distribution<double> y_dist(b.get_y(),1);
-					b.set_y(abs(y_dist(generator)));
-				// 	init_run=1;
-				// }
+				uniform_real_distribution<double> y_dist(b.get_y(),1);
+				b.set_y(abs(y_dist(generator)));
+
 				config.update_blck_to_net(bid, last_net_id);
-				b.add_edge_weight(last_net_id, q1_w, 1);
 
   				switch(j) {
   					case 0:
+ 						b.add_edge_weight(last_net_id, q1_w, 1);
 						b_1.add_edge_weight(last_net_id, q1_w, 1);
 						new_blcks_to_net[0].push_back(last_net_id);
   						break;
 
   					case 1:
+  						b.add_edge_weight(last_net_id, q2_w, 1);
  						b_2.add_edge_weight(last_net_id, q2_w, 1);
 						new_blcks_to_net[1].push_back(last_net_id);
   						break;
   					case 2:
+  						b.add_edge_weight(last_net_id, q3_w, 1);
  						b_3.add_edge_weight(last_net_id, q3_w, 1);
 						new_blcks_to_net[2].push_back(last_net_id);
   						break;
   					case 3:
+  						b.add_edge_weight(last_net_id, q3_w, 1);
 						b_4.add_edge_weight(last_net_id, q4_w, 1);
 						new_blcks_to_net[3].push_back(last_net_id);
   						break;
@@ -446,7 +450,22 @@ float Placer::get_hpwl() {
 }
 
 
-int Placer::snap_to_grid() {
+int Placer::is_grid_congested(IC ic, Configholder config) {
+	int congestion_managable=0;
+
+	return congestion_managable;
+} 
+
+int Placer::snap_to_grid(IC &ic, Configholder config) {
+	int no_overlap=0;
+
+	// need to conduct BFS-like search
+
+	LOG(INFO) << "Snapping to Grid";
+	while(no_overlap==0) {
+
+	}
+
 	return 0;
 }
 

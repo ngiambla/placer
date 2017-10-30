@@ -115,7 +115,7 @@ int main(int argc, char * argv[]) {
 				ic.get_blck(row[0]).display_pos(row[0]);
 			}
 			LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl() << "\n";
-
+			
 			if(was_placed==1) {
 				LOG(INFO) << "..-* Spreading iter["<<iters<<"] *-..";
 

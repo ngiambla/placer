@@ -14,6 +14,8 @@ class Blck {
 		int isFixed;
 		int isPseudo;
 
+		int history=0;
+
 	public:
 		Blck();
 

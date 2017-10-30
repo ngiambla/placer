@@ -30,19 +30,18 @@ int solve_equation(int n, int * Ap, int * Ai, double * Ax, double * x, double * 
 
 void Placer::calculate_hpwl(IC ic, Configholder config) {
 	float sum=0;
-	int should_add;
+
 	map<int, vector<int>> nbs_map_t=config.get_nbs_map();
 	for(const auto &key : nbs_map_t) {
-		float min_x=ic.get_grid_size()*10, max_x=0;
+		float min_x=ic.get_grid_size(), max_x=0;
 		float min_y=ic.get_grid_size(), max_y=0;
-
 		float bx, by;
+
 		for(int i : key.second) {
 			Blck b=ic.get_blck(i);
 			if(b.is_pseudo()==0) {
 				bx=b.get_x();
 				by=b.get_y();
-
 				if(bx<=min_x) { //find min x;
 					min_x=bx;
 				}

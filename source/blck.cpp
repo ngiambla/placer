@@ -5,7 +5,11 @@
 Blck::Blck() {
 	isPseudo=0;
 	isFixed=0;
+	
 	history=0;
+	classNum=-2;
+	isStale=0;
+
 	x=UNKNOWN;
 	y=UNKNOWN;
 }
@@ -49,6 +53,20 @@ void Blck::set_y(float y) {
 	}
 } 
 
+int Blck::belongs_to() {
+	return classNum;
+}
+
+void Blck::set_to_group(int group_id) {
+	if(isStale==0) {
+		classNum=group_id;
+		isStale=1;
+	}
+}
+
+void Blck::refresh() {
+	isStale=0;
+}
 
 // allow r/w access to weights.
 float Blck::get_net_weight(int netNum) {
@@ -63,10 +81,10 @@ void Blck::update_pseudo_blck_weight() {
 	int i;
 	for(const auto& key : net_w_expansion) {
 		for(i=0; i<net_w_expansion[key.first].size(); ++i) {
-			if(history == 3) {
-				net_w_expansion[key.first][i]*=0.95;
+			if(history == 4) {
+				net_w_expansion[key.first][i]*=0.05;
 			} else {
-				net_w_expansion[key.first][i]*=2;
+				net_w_expansion[key.first][i]*=0.5;
 				++history;
 			}
 		}
@@ -108,10 +126,11 @@ void Blck::display_blck() {
 }
 
 void Blck::display_pos(int id) {
-	if(isPseudo==1) {
-		//printf("blck [%d] @x[%f]y[%f] __.*\n", id, x,y);
-	} else {
-		printf("blck [%d] @x[%f]y[%f]\n", id, x,y);
+	if(isPseudo==0) {
+		if(classNum==-2) {
+			printf("blck [%d] @x[%f]y[%f] class[UNASSIGN]\n", id, x, y);
+		} else {
+			printf("blck [%d] @x[%f]y[%f] class[%d]\n", id, x, y, classNum);
+		}
 	}
-
 }

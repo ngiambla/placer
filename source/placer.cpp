@@ -7,10 +7,10 @@ extern "C" {
 
 // void constructors and destructors.
 Placer::Placer() {
-	q1_w=50;
-	q2_w=50;
-	q3_w=50;
-	q4_w=50;
+	q1_w=1;
+	q2_w=1;
+	q3_w=1;
+	q4_w=1;
 }
 
 Placer::~Placer() {}
@@ -212,7 +212,7 @@ int Placer::place(IC &ic, Configholder config) {
 int Placer::spread(IC &ic, Configholder &config, int iter) {
 	int spread_status=1;
 	int init_run=0;
-	int i=0, j=0, last_net_id, last_blck_id;
+	int i=0, j=0, k=0, last_net_id, last_blck_id;
 
 	float num_of_mv_blcks_per_quad=(float)(config.get_blck_to_nets().size()-config.get_ref_blcks().size())/4;
 
@@ -294,60 +294,92 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		// set blcks to classes.
 		last_net_id=config.get_nbs_map().rbegin()->first + 1;
 		default_random_engine generator; // used for rand number gens.
+		if(i==0) {
+			for(vector<int> row : config.get_blck_to_nets()) {
+
+				int bid=row[0];
+				Blck &blck_to_add=ic.get_blck(bid);
+				blck_to_add.refresh();
+			}			
+		}
 
 		for(vector<int> row : config.get_blck_to_nets()) {
 
 			int bid=row[0];
 
 			Blck &blck_to_add=ic.get_blck(bid);
-			discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
-  			
-  			int potential_class=distribution(generator);	
-  			
-  			if(blck_to_add.is_fixed()==0) {
-	  			switch(potential_class) {
-	  				case 0:
-	  					class_to_blck[0].push_back(bid);
-	  					if(wc1==2) {
-	  						wc1=1;
-	  					}
-	  					wc2=2;
-	  					wc3=2;
-	  					wc4=2;
-	  					break;
-	  				case 1:
-	  					class_to_blck[1].push_back(bid);
-	  					if(wc2==2) {
-	  						wc2=1;
-	  					}
-	  					wc1=2;
-	  					wc3=2;
-	  					wc4=2; 
-	  					break;
-	  				case 2:
-	  					class_to_blck[2].push_back(bid);
-	  					if(wc3==2) {
-	  						wc3=1;
-	  					}
-	  					wc1=2;
-	  					wc2=2;
-	  					wc4=2; 
-	  					break;
-	  				case 3:
-	  					class_to_blck[3].push_back(bid);
-	  					if(wc4==2) {
-	  						wc4=1;
-	  					}
-	  					wc1=2;
-	  					wc2=2;
-	  					wc3=2; 
-	  					break;
+
+  			for(k=0; k<pow(2, iter+1); ++k) {
+	  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to()==k || blck_to_add.belongs_to()==-2)) {
+
+	  				// LOG(INFO) << "How Many? : " <<pow(2,iter);
+	  				// LOG(INFO) << "Blck belongs to group: " << blck_to_add.belongs_to();
+	  				// LOG(INFO) << "i: "<< i;
+	  				// LOG(INFO) << "k: " << k;
+					
+					discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
+  					int potential_class=distribution(generator);
+
+	  				//cin.ignore();
+		  			switch(potential_class) {
+		  				case 0:
+		  					class_to_blck[0].push_back(bid);
+		  					blck_to_add.set_to_group(k);
+		  					if(wc1==2) {
+		  						wc1=1;
+		  					}
+		  					wc2=2;
+		  					wc3=2;
+		  					wc4=2;
+		  					k=(int)pow(2, iter+1)+1;
+		  					break;
+		  				case 1:
+		  					class_to_blck[1].push_back(bid);
+		  					blck_to_add.set_to_group(k+1);
+		  					if(wc2==2) {
+		  						wc2=1;
+		  					}
+		  					wc1=2;
+		  					wc3=2;
+		  					wc4=2; 
+		  					k=(int)pow(2, iter+1)+1;
+		  					break;
+		  				case 2:
+		  					class_to_blck[2].push_back(bid);
+		  					blck_to_add.set_to_group(k+2);
+
+		  					if(wc3==2) {
+		  						wc3=1;
+		  					}
+		  					wc1=2;
+		  					wc2=2;
+		  					wc4=2; 
+		  					k=(int)pow(2, iter+1)+1;
+		  					break;
+		  				case 3:
+		  					class_to_blck[3].push_back(bid);
+		  					blck_to_add.set_to_group(k+3);
+
+		  					if(wc4==2) {
+		  						wc4=1;
+		  					}
+		  					wc1=2;
+		  					wc2=2;
+		  					wc3=2; 
+		  					k=(int)pow(2, iter+1)+1;
+		  					break;
+		  			}
+	  			} else if(blck_to_add.is_pseudo()==0) {
+	  				if(i==0){
+	 	 				blck_to_add.update_pseudo_blck_weight();
+	  				}
 	  			}
-  			} else if(blck_to_add.is_pseudo()==0) {
-  				if(i==0){
- 	 				blck_to_add.update_pseudo_blck_weight();
-  				}
+	  			if(iter==1) {
+	  				break;
+	  			}
   			}
+
+
 		}
   		for(j=0;j<4;++j) {
   			for(int bid : class_to_blck[j]) {
@@ -410,7 +442,6 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		}
 
 
-
 		// define new
 		next_x_cuts[0+i*4]=cur_x_cuts[i]-resize_inc;
 		next_x_cuts[1+i*4]=cur_x_cuts[i]+resize_inc;
@@ -422,10 +453,16 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		next_y_cuts[2+i*4]=cur_y_cuts[i]+resize_inc;
 		next_y_cuts[3+i*4]=cur_y_cuts[i]+resize_inc;
 
-		q1_w*=abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
-		q2_w*=abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
-		q3_w*=abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
-		q4_w*=abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
+		// LOG(INFO) << abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
+		// LOG(INFO) << abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
+		// LOG(INFO) << abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
+		// LOG(INFO) << abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
+
+
+		q1_w*=0.5*abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
+		q2_w*=0.5*abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
+		q3_w*=0.5*abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
+		q4_w*=0.5*abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
 
 	}
 	printf("\n");

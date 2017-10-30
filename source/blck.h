@@ -15,6 +15,8 @@ class Blck {
 		int isPseudo;
 
 		int history;
+		int classNum;
+		int isStale;
 
 	public:
 		Blck();
@@ -36,6 +38,10 @@ class Blck {
 
 		void set_pseudo();
 		int is_pseudo();
+
+		int belongs_to();
+		void set_to_group(int group_id);
+		void refresh();
 
 		void display_blck();
 		void display_pos(int id);

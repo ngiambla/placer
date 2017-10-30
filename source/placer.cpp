@@ -7,10 +7,10 @@ extern "C" {
 
 // void constructors and destructors.
 Placer::Placer() {
-	q1_w=10;
-	q2_w=10;
-	q3_w=10;
-	q4_w=10;
+	q1_w=20;
+	q2_w=20;
+	q3_w=20;
+	q4_w=20;
 }
 
 Placer::~Placer() {}
@@ -134,8 +134,8 @@ int Placer::place(IC &ic, Configholder config) {
 					}
 					if(bnum != item[0] && ic.get_blck(bnum).is_fixed()==1) {
 						Blck b3 = ic.get_blck(bnum);
-						cur_b_x=cur_b_x+b3.get_x()*b.get_net_weight(item[i]);
-						cur_b_y=cur_b_y+b3.get_y()*b.get_net_weight(item[i]);	
+						cur_b_x=cur_b_x+b3.get_x()*b3.get_net_weight(item[i]);
+						cur_b_y=cur_b_y+b3.get_y()*b3.get_net_weight(item[i]);	
 
 					}
 				}		
@@ -231,8 +231,8 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 	for(i=0; i<cur_x_cuts.size(); ++i) {
 
-		// define class holders;
-		map<int, int> c1, c2, c3, c4;
+		map<int, vector<int> > class_to_blck; 				// define class holders;
+		double wc1=1, wc2=1, wc3=1, wc4=1;				// weight per class;
 
 		// define new pseudo blocks for expansion.
 		Blck b_1;
@@ -242,6 +242,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 		last_blck_id=config.get_blck_to_nets()[config.get_blck_to_nets().size()-1][0];
 		printf("Spreading: %3.2f%%\r", (float)100*i/cur_x_cuts.size());
+
 		// fill in pseudos blocks;
 		vector< vector<float> > new_refs;
 		vector<float> refs;
@@ -252,6 +253,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		for(j=0; j<4; ++j){
 			new_blcks_to_net.push_back(row);
 			new_refs.push_back(refs);
+			class_to_blck[j]=row;
 		}
 
 		b_1.set_x(cur_x_cuts[i]-resize_inc);
@@ -292,60 +294,96 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 		// set blcks to classes.
 		last_net_id=config.get_nbs_map().rbegin()->first + 1;
+		default_random_engine generator; // used for rand number gens.
 
 		for(vector<int> row : config.get_blck_to_nets()) {
-			Blck &b = ic.get_blck(row[0]);
-			if(b.is_fixed()==0 && b.is_pseudo() ==0) {
 
-				if(init_run==0) {
-					default_random_engine generator;
-					uniform_real_distribution<double> x_dist(b.get_x(),1);
+			int bid=row[0];
+
+			Blck &blck_to_add=ic.get_blck(bid);
+			discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
+  			
+  			int potential_class=distribution(generator);	
+  			
+  			if(blck_to_add.is_fixed()==0) {
+	  			switch(potential_class) {
+	  				case 0:
+	  					class_to_blck[0].push_back(bid);
+	  					if(wc1==2) {
+	  						wc1=1;
+	  					}
+	  					wc2=2;
+	  					wc3=2;
+	  					wc4=2;
+	  					break;
+	  				case 1:
+	  					class_to_blck[1].push_back(bid);
+	  					if(wc2==2) {
+	  						wc2=1;
+	  					}
+	  					wc1=2;
+	  					wc3=2;
+	  					wc4=2; 
+	  					break;
+	  				case 2:
+	  					class_to_blck[2].push_back(bid);
+	  					if(wc3==2) {
+	  						wc3=1;
+	  					}
+	  					wc1=2;
+	  					wc2=2;
+	  					wc4=2; 
+	  					break;
+	  				case 3:
+	  					class_to_blck[3].push_back(bid);
+	  					if(wc4==2) {
+	  						wc4=1;
+	  					}
+	  					wc1=2;
+	  					wc2=2;
+	  					wc3=2; 
+	  					break;
+	  			}
+  			} else if(blck_to_add.is_pseudo()==0) {
+  				blck_to_add.update_pseudo_blck_weight();
+  			}
+		}
+  		for(j=0;j<4;++j) {
+  			for(int bid : class_to_blck[j]) {
+  				Blck &b = ic.get_blck(bid);
+				// if(init_run==0) {
+					uniform_real_distribution<double> x_dist(b.get_x(),1.5/iter);
 					b.set_x(abs(x_dist(generator)));
 
-					uniform_real_distribution<double> y_dist(b.get_y(),1);
+					uniform_real_distribution<double> y_dist(b.get_y(),1.5/iter);
 					b.set_y(abs(y_dist(generator)));
-					init_run=1;
-				}
+				// 	init_run=1;
+				// }
+				config.update_blck_to_net(bid, last_net_id);
+				b.add_edge_weight(last_net_id, q1_w, 1);
 
-				if(b.get_x() <= cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
+  				switch(j) {
+  					case 0:
+						b_1.add_edge_weight(last_net_id, q1_w, 1);
+						new_blcks_to_net[0].push_back(last_net_id);
+  						break;
 
-					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, q1_w, 1);
-					b_1.add_edge_weight(last_net_id, q1_w, 1);
-					new_blcks_to_net[0].push_back(last_net_id);
-
-				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() <= cur_y_cuts[i]) {
-
-					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, q2_w, 1);
-					b_2.add_edge_weight(last_net_id, q2_w, 1);
-					new_blcks_to_net[1].push_back(last_net_id);
-
-				} else if(b.get_x() <= cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
-
-					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, q3_w, 1);
-					b_3.add_edge_weight(last_net_id, q3_w, 1);
-					new_blcks_to_net[2].push_back(last_net_id);
-
-				} else if(b.get_x() > cur_x_cuts[i] && b.get_y() > cur_y_cuts[i]) {
-
-					config.update_blck_to_net(row[0], last_net_id);
-					b.add_edge_weight(last_net_id, q4_w, 1);
-					b_4.add_edge_weight(last_net_id, q4_w, 1);
-					new_blcks_to_net[3].push_back(last_net_id);
-
-				} else {
-					LOG(INFO) << "Unclassified";
-				}
-				last_net_id++;
-
-			} else if(b.is_pseudo()==1) {
-				if(i==0) {
-					b.update_pseudo_blck_weight();			
-				}
-			}
-		}
+  					case 1:
+ 						b_2.add_edge_weight(last_net_id, q2_w, 1);
+						new_blcks_to_net[1].push_back(last_net_id);
+  						break;
+  					case 2:
+ 						b_3.add_edge_weight(last_net_id, q3_w, 1);
+						new_blcks_to_net[2].push_back(last_net_id);
+  						break;
+  					case 3:
+						b_4.add_edge_weight(last_net_id, q4_w, 1);
+						new_blcks_to_net[3].push_back(last_net_id);
+  						break;
+  				}
+  				++last_net_id;
+  			}
+  		}
 
 		for(j=0; j<4; ++j) {
 			if(new_blcks_to_net[j].size() > 1) {
@@ -381,6 +419,11 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		next_y_cuts[2+i*4]=cur_y_cuts[i]+resize_inc;
 		next_y_cuts[3+i*4]=cur_y_cuts[i]+resize_inc;
 
+		q1_w*=abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad)+0.5; 
+		q2_w*=abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad)+0.5; 
+		q3_w*=abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad)+0.5; 
+		q4_w*=abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad)+0.5; 
+
 	}
 	printf("\n");
 	// purge cuts;
@@ -392,11 +435,6 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	cur_y_cuts=next_y_cuts;
 
 	ic.update_nbs_map(config);
-
-	q1_w*=4;
-	q2_w*=4;
-	q3_w*=4;
-	q4_w*=4;
 
 	LOG(INFO) << "New cuts to make [x]: " <<cur_x_cuts.size();
 	LOG(INFO) << "New cuts to make [y]: " <<cur_y_cuts.size();

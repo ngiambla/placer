@@ -99,7 +99,6 @@ void initialize_system(char * filename) {
 // main call.
 int main(int argc, char * argv[]) {
 	char filename[20]="../circuits/";
-	char ans;
 	int was_placed=0;
 	int iters=1;
 
@@ -116,7 +115,7 @@ int main(int argc, char * argv[]) {
 			}
 			LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl() << "\n";
 
-			if(iters==7) {
+			if(iters==10 || placer.is_grid_congested(ic, config)==1) {
 				placer.snap_to_grid(ic, config);
 			} else {
 				if(was_placed==1) {

@@ -7,10 +7,16 @@ extern "C" {
 
 // void constructors and destructors.
 Placer::Placer() {
-	q1_w=5;
-	q2_w=5;
-	q3_w=5;
-	q4_w=5;
+	q1_w=0.5;
+	q2_w=0.5;
+	q3_w=0.5;
+	q4_w=0.5;
+
+	wc1=3;			// weight per class;
+	wc2=3; 
+	wc3=3; 
+	wc4=3;
+
 }
 
 Placer::~Placer() {}
@@ -153,7 +159,6 @@ int Placer::place(IC &ic, Configholder config) {
 		Tx_t.push_back(key.second);
 	}
 
-	LOG(INFO) << "-- Compressing Matrix.";
 	nz=Tx_t.size();
 	
 	Ti=&Ti_t[0];
@@ -168,8 +173,6 @@ int Placer::place(IC &ic, Configholder config) {
 	Ax=new double[nz];
 	x=new double[n];
 
-	LOG(INFO) << "-- Non Zero Entries: "<< nz;
-
 	status=umfpack_di_triplet_to_col(n, n, nz, Ti, Tj, Tx, Ap, Ai, Ax, NULL);
 	if (status != UMFPACK_OK) {
 		return EXIT_FAILURE;
@@ -177,18 +180,14 @@ int Placer::place(IC &ic, Configholder config) {
 
 
 
-	LOG(INFO) << "-- Solving for X";
 	solve_equation(n, Ap, Ai, Ax, x, b_x, 0);		// indicates x (only for semantic rep);
 
-	LOG(INFO) << "About to modify X.";
 	for(i=0; i< n; ++i) {
 		ic.get_blck(idx_to_blck[i]).set_x(x[i]);
 	}
 	
-	LOG(INFO) << "-- Solving for Y";
 	solve_equation(n, Ap, Ai, Ax, x, b_y, 1);		// indicates y '''''''''''''	
 
-	LOG(INFO) << "About to modify Y";
 	for(i=0; i< n; ++i) {
 		ic.get_blck(idx_to_blck[i]).set_y(x[i]);
 	}
@@ -211,8 +210,7 @@ int Placer::place(IC &ic, Configholder config) {
 //
 int Placer::spread(IC &ic, Configholder &config, int iter) {
 	int spread_status=1;
-	int init_run=0;
-	int i=0, j=0, k=0, last_net_id, last_blck_id;
+	int i=0, j=0, last_net_id, last_blck_id;
 
 	float num_of_mv_blcks_per_quad=(float)(config.get_blck_to_nets().size()-config.get_ref_blcks().size())/4;
 
@@ -231,7 +229,6 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	for(i=0; i<cur_x_cuts.size(); ++i) {
 
 		map<int, vector<int> > class_to_blck; 				// define class holders;
-		double wc1=1, wc2=1, wc3=1, wc4=1;				// weight per class;
 
 		// define new pseudo blocks for expansion.
 		Blck b_1;
@@ -308,59 +305,60 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 			int bid=row[0];
 
 			Blck &blck_to_add=ic.get_blck(bid);
+			if(blck_to_add.is_stale()==0) {
+	  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to()==i || blck_to_add.belongs_to() == -2)) {
+					
+					discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
+					int potential_class=distribution(generator);
 
-  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to()==i || blck_to_add.belongs_to() == -2) && blck_to_add.is_stale()==0) {
-				
-				discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
-				int potential_class=distribution(generator);
+		  			switch(potential_class) {
+		  				case 0:
+		  					class_to_blck[0].push_back(bid);
+		  					blck_to_add.set_to_group((i-i%4)+i*4);
+		  					if(wc1==3) {
+		  						wc1=1;
+		  					}
+		  					wc2=3;
+		  					wc3=3;
+		  					wc4=3;
+		  					break;
+		  				case 1:
+		  					class_to_blck[1].push_back(bid);
+		  					blck_to_add.set_to_group((i+1-i%4)+i*4);
+		  					if(wc2==3) {
+		  						wc2=1;
+		  					}
+		  					wc1=3;
+		  					wc3=3;
+		  					wc4=3;
+		  					break;
+		  				case 2:
+		  					class_to_blck[2].push_back(bid);
+		  					blck_to_add.set_to_group((i+2-i%4)+i*4);
 
-	  			switch(potential_class) {
-	  				case 0:
-	  					class_to_blck[0].push_back(bid);
-	  					blck_to_add.set_to_group((i-i%4)+i*4);
-	  					if(wc1==2) {
-	  						wc1=1;
-	  					}
-	  					wc2=2;
-	  					wc3=2;
-	  					wc4=2;
-	  					break;
-	  				case 1:
-	  					class_to_blck[1].push_back(bid);
-	  					blck_to_add.set_to_group((i+1-i%4)+i*4);
-	  					if(wc2==2) {
-	  						wc2=1;
-	  					}
-	  					wc1=2;
-	  					wc3=2;
-	  					wc4=2; 
-	  					break;
-	  				case 2:
-	  					class_to_blck[2].push_back(bid);
-	  					blck_to_add.set_to_group((i+2-i%4)+i*4);
+		  					if(wc3==3) {
+		  						wc3=1;
+		  					}
+		  					wc1=3;
+		  					wc2=3;
+		  					wc4=3; 
+		  					break;
+		  				case 3:
+		  					class_to_blck[3].push_back(bid);
+		  					blck_to_add.set_to_group((i+3-i%4)+i*4);
 
-	  					if(wc3==2) {
-	  						wc3=1;
-	  					}
-	  					wc1=2;
-	  					wc2=2;
-	  					wc4=2; 
-	  					break;
-	  				case 3:
-	  					class_to_blck[3].push_back(bid);
-	  					blck_to_add.set_to_group((i+3-i%4)+i*4);
+		  					if(wc4==3) {
+		  						wc4=1;
+		  					}
+		  					wc1=3;
+		  					wc2=3;
+		  					wc3=3; 
+		  					break;
+		  			}
 
-	  					if(wc4==2) {
-	  						wc4=1;
-	  					}
-	  					wc1=2;
-	  					wc2=2;
-	  					wc3=2; 
-	  					break;
-	  			}
-
-			} else if(blck_to_add.is_pseudo()==1) {
- 				blck_to_add.update_pseudo_blck_weight();
+				} else if(blck_to_add.is_pseudo()==1) {
+	 				blck_to_add.update_pseudo_blck_weight();
+				}
 			}
 		}
 
@@ -437,15 +435,15 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		next_y_cuts[3+i*4]=cur_y_cuts[i]+resize_inc;
 
 
-		q1_w*=abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
-		q2_w*=abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
-		q3_w*=abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
-		q4_w*=abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
+		q1_w *= abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
+		q2_w *= abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
+		q3_w *= abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
+		q4_w *= abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
 
-		q1_w+=1;
-		q2_w+=1;
-		q3_w+=1;
-		q4_w+=1;
+		q1_w+=(1-1/iter);
+		q2_w+=(1-1/iter);
+		q3_w+=(1-1/iter);
+		q4_w+=(1-1/iter);
 
 	}
 	printf("\n");
@@ -473,6 +471,7 @@ float Placer::get_hpwl() {
 int Placer::is_grid_congested(IC ic, Configholder config) {
 	int congestion_managable=0;
 	int grid_size=config.get_grid_size();
+	float p_overfill=0;
 	int i,j;
 
 	int overfill_count=0;
@@ -482,25 +481,29 @@ int Placer::is_grid_congested(IC ic, Configholder config) {
 
 	for(i=0; i< grid_size; ++i) {
 		for(j=0; j< grid_size; ++j) {
-			grid_size[make_pair(i,j)]=blck_ids;
+			grid_to_blcks[make_pair(i,j)]=blck_ids;
 		}
 	}
 
 	for(vector<int> row : config.get_blck_to_nets()) {
 		Blck b = ic.get_blck(row[0]);
 		if(b.is_pseudo()==0) {
-			grid_size[make_pair((int)floor(b.get_x()),(int)floor(b.get_y()))].push_back(row[0]);				
+			grid_to_blcks[make_pair((int)floor(b.get_x()),(int)floor(b.get_y()))].push_back(row[0]);				
 		}		
 	}
 
 	for(const auto& key : grid_to_blcks) {
-		if(grid_size[make_pair(key.first.first, key.first.second)].size()>1) {
-			overfill_count++;
+		if(grid_to_blcks[make_pair(key.first.first, key.first.second)].size()>1) {
+			overfill_count+=grid_to_blcks[make_pair(key.first.first, key.first.second)].size();
 		}
 	}
+	p_overfill=100*((float)overfill_count/(grid_size*grid_size));
+	LOG(INFO) << "Percentage of Slots filled: "<< p_overfill;
 
-	LOG(INFO) << "Percentage of Slots filled: "<< 100*(float)(overfill_count/(grid_size*grid_size));
-	cin.ignore();
+	if(p_overfill<25) {
+		cin.ignore();
+		congestion_managable=1;
+	}
 
 
 	return congestion_managable;
@@ -509,10 +512,11 @@ int Placer::is_grid_congested(IC ic, Configholder config) {
 int Placer::snap_to_grid(IC &ic, Configholder config) {
 	int no_overlap=0;
 
-	map< pair<int, int> , vector<int> > grid_to
+	map< pair<int, int> , vector<int> > grid_to_blcks;
 
 	vector< vector<int> > blck_to_nets_t=config.get_blck_to_nets();
 
+	LOG(INFO) << "Legalizing Blocks";
 	for(vector<int> row : blck_to_nets_t) {
 		Blck &b = ic.get_blck(row[0]);
 		if(b.is_fixed()==0) {
@@ -524,7 +528,7 @@ int Placer::snap_to_grid(IC &ic, Configholder config) {
 		}
 	}
 
-	LOG(INFO) << "Legalizing Blocks";
+	LOG(INFO) << "Snapping To Grid";
 	while(no_overlap==0) {
 
 	}

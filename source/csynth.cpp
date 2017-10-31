@@ -115,13 +115,18 @@ int main(int argc, char * argv[]) {
 				ic.get_blck(row[0]).display_pos(row[0]);
 			}
 			LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl() << "\n";
-			
-			if(was_placed==1) {
-				LOG(INFO) << "..-* Spreading iter["<<iters<<"] *-..";
 
-				placer.spread(ic, config, iters);
-				LOG(INFO) << "..-* Spreading Complete. *-..";
-			}
+			if(iters==7) {
+				placer.snap_to_grid(ic, config);
+			} else {
+				if(was_placed==1) {
+					LOG(INFO) << "..-* Spreading iter["<<iters<<"] *-..";
+
+					placer.spread(ic, config, iters);
+					LOG(INFO) << "..-* Spreading Complete. *-..";
+				}
+			}			
+
 
 			cin.ignore();
 			++iters;

@@ -7,10 +7,10 @@ extern "C" {
 
 // void constructors and destructors.
 Placer::Placer() {
-	q1_w=100;
-	q2_w=100;
-	q3_w=100;
-	q4_w=100;
+	q1_w=50;
+	q2_w=50;
+	q3_w=50;
+	q4_w=50;
 }
 
 Placer::~Placer() {}
@@ -309,15 +309,21 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 			Blck &blck_to_add=ic.get_blck(bid);
 
-  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to()==i || blck_to_add.belongs_to() == -2) && blck_to_add.is_stale()==0) {
+  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to()-i%4==i-i%4 || blck_to_add.belongs_to() == -2) && blck_to_add.is_stale()==0) {
 				
 				discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
 				int potential_class=distribution(generator);
 
+				// LOG(DEBUG) << "Blck ["<<bid<< "] <--> Class ["<<blck_to_add.belongs_to()<<"]";
+				// LOG(DEBUG) << "var i is: "<<i;
+				// for(k=0; k<4; ++k) {
+				// 	LOG(DEBUG) << "Possible Next Class: "<<(i+k-i%4)+i*4;
+				// }
+
 	  			switch(potential_class) {
 	  				case 0:
 	  					class_to_blck[0].push_back(bid);
-	  					blck_to_add.set_to_group((i-i%4)*4);
+	  					blck_to_add.set_to_group((i-i%4)+i*4);
 	  					if(wc1==2) {
 	  						wc1=1;
 	  					}
@@ -327,7 +333,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	  					break;
 	  				case 1:
 	  					class_to_blck[1].push_back(bid);
-	  					blck_to_add.set_to_group((i+1-i%4)*4);
+	  					blck_to_add.set_to_group((i+1-i%4)+i*4);
 	  					if(wc2==2) {
 	  						wc2=1;
 	  					}
@@ -337,7 +343,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	  					break;
 	  				case 2:
 	  					class_to_blck[2].push_back(bid);
-	  					blck_to_add.set_to_group((i+2-i%4)*4);
+	  					blck_to_add.set_to_group((i+2-i%4)+i*4);
 
 	  					if(wc3==2) {
 	  						wc3=1;
@@ -348,7 +354,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	  					break;
 	  				case 3:
 	  					class_to_blck[3].push_back(bid);
-	  					blck_to_add.set_to_group((i+3-i%4)*4);
+	  					blck_to_add.set_to_group((i+3-i%4)+i*4);
 
 	  					if(wc4==2) {
 	  						wc4=1;
@@ -442,10 +448,10 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		q3_w*=abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
 		q4_w*=abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
 
-		q1_w+=10;
-		q2_w+=10;
-		q3_w+=10;
-		q4_w+=10;
+		// q1_w+=10;
+		// q2_w+=10;
+		// q3_w+=10;
+		// q4_w+=10;
 
 	}
 	printf("\n");
@@ -480,6 +486,8 @@ int Placer::snap_to_grid(IC &ic, Configholder config) {
 	int no_overlap=0;
 
 	// need to conduct BFS-like search
+	map<int, vector<int> > nbs_map_t=config.get_nbs_map();
+	//set all x, and y's to center of grid;
 
 	LOG(INFO) << "Snapping to Grid";
 	while(no_overlap==0) {

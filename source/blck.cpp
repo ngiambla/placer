@@ -93,7 +93,7 @@ void Blck::update_pseudo_blck_weight() {
 					net_history[key.first]=0;
 				}
 				if(net_history[key.first] >= 4) {
-					net_w_expansion[key.first][i]*=0.95;
+					//net_w_expansion[key.first][i]*=0.99;
 				}
 			}
 		}

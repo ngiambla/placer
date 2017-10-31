@@ -7,10 +7,10 @@ extern "C" {
 
 // void constructors and destructors.
 Placer::Placer() {
-	q1_w=50;
-	q2_w=50;
-	q3_w=50;
-	q4_w=50;
+	q1_w=5;
+	q2_w=5;
+	q3_w=5;
+	q4_w=5;
 }
 
 Placer::~Placer() {}
@@ -309,16 +309,10 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 
 			Blck &blck_to_add=ic.get_blck(bid);
 
-  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to()-i%4==i-i%4 || blck_to_add.belongs_to() == -2) && blck_to_add.is_stale()==0) {
+  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to()==i || blck_to_add.belongs_to() == -2) && blck_to_add.is_stale()==0) {
 				
 				discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
 				int potential_class=distribution(generator);
-
-				// LOG(DEBUG) << "Blck ["<<bid<< "] <--> Class ["<<blck_to_add.belongs_to()<<"]";
-				// LOG(DEBUG) << "var i is: "<<i;
-				// for(k=0; k<4; ++k) {
-				// 	LOG(DEBUG) << "Possible Next Class: "<<(i+k-i%4)+i*4;
-				// }
 
 	  			switch(potential_class) {
 	  				case 0:
@@ -448,10 +442,10 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		q3_w*=abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
 		q4_w*=abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
 
-		// q1_w+=10;
-		// q2_w+=10;
-		// q3_w+=10;
-		// q4_w+=10;
+		q1_w+=1;
+		q2_w+=1;
+		q3_w+=1;
+		q4_w+=1;
 
 	}
 	printf("\n");
@@ -478,6 +472,36 @@ float Placer::get_hpwl() {
 
 int Placer::is_grid_congested(IC ic, Configholder config) {
 	int congestion_managable=0;
+	int grid_size=config.get_grid_size();
+	int i,j;
+
+	int overfill_count=0;
+
+	map< pair<int, int> , vector<int> > grid_to_blcks;
+	vector<int> blck_ids;
+
+	for(i=0; i< grid_size; ++i) {
+		for(j=0; j< grid_size; ++j) {
+			grid_size[make_pair(i,j)]=blck_ids;
+		}
+	}
+
+	for(vector<int> row : config.get_blck_to_nets()) {
+		Blck b = ic.get_blck(row[0]);
+		if(b.is_pseudo()==0) {
+			grid_size[make_pair((int)floor(b.get_x()),(int)floor(b.get_y()))].push_back(row[0]);				
+		}		
+	}
+
+	for(const auto& key : grid_to_blcks) {
+		if(grid_size[make_pair(key.first.first, key.first.second)].size()>1) {
+			overfill_count++;
+		}
+	}
+
+	LOG(INFO) << "Percentage of Slots filled: "<< 100*(float)(overfill_count/(grid_size*grid_size));
+	cin.ignore();
+
 
 	return congestion_managable;
 } 
@@ -485,15 +509,29 @@ int Placer::is_grid_congested(IC ic, Configholder config) {
 int Placer::snap_to_grid(IC &ic, Configholder config) {
 	int no_overlap=0;
 
-	// need to conduct BFS-like search
-	map<int, vector<int> > nbs_map_t=config.get_nbs_map();
-	//set all x, and y's to center of grid;
+	map< pair<int, int> , vector<int> > grid_to
 
-	LOG(INFO) << "Snapping to Grid";
+	vector< vector<int> > blck_to_nets_t=config.get_blck_to_nets();
+
+	for(vector<int> row : blck_to_nets_t) {
+		Blck &b = ic.get_blck(row[0]);
+		if(b.is_fixed()==0) {
+			b.display_pos(row[0]);
+			b.set_x(floor(b.get_x())+0.5);
+			b.set_y(floor(b.get_y())+0.5);
+			b.display_pos(row[0]);
+			cin.ignore();
+		}
+	}
+
+	LOG(INFO) << "Legalizing Blocks";
 	while(no_overlap==0) {
 
 	}
 
 	return 0;
 }
+
+
+
 

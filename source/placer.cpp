@@ -511,18 +511,40 @@ int Placer::is_grid_congested(IC ic, Configholder config) {
 
 int Placer::snap_to_grid(IC &ic, Configholder config) {
 	int no_overlap=0;
-
-	map< pair<int, int> , vector<int> > grid_to_blcks;
+	int i, j;
+	int grid_size=config.get_grid_size();
 
 	vector< vector<int> > blck_to_nets_t=config.get_blck_to_nets();
+
+	map< pair<int, int> , vector<int> > grid_to_blcks;
+	vector<int> blck_ids;
+
+	for(i=0; i< grid_size; ++i) {
+		for(j=0; j< grid_size; ++j) {
+			grid_to_blcks[make_pair(i,j)]=blck_ids;
+		}
+	}
 
 	LOG(INFO) << "Legalizing Blocks";
 	for(vector<int> row : blck_to_nets_t) {
 		Blck &b = ic.get_blck(row[0]);
 		if(b.is_fixed()==0) {
 			b.display_pos(row[0]);
+			if(b.get_x() > grid_size) {
+				LOG(ERROR) << "Placer panic. Exiting [x too large]";
+				exit(-1);
+			} 
+
+			if(b.get_y() > grid_size) {
+				LOG(ERROR) << "Placer panic. Exiting [y too large]";
+				exit(-1);
+			}
+			
+			grid_to_blcks[make_pair((int)floor(b.get_x()), (int)floor(b.get_x()))].push_back(row[0]);
+
 			b.set_x(floor(b.get_x())+0.5);
 			b.set_y(floor(b.get_y())+0.5);
+
 			b.display_pos(row[0]);
 			cin.ignore();
 		}
@@ -531,6 +553,18 @@ int Placer::snap_to_grid(IC &ic, Configholder config) {
 	LOG(INFO) << "Snapping To Grid";
 	while(no_overlap==0) {
 
+		no_overlap=1;
+		for(const auto& key : grid_to_blcks) {
+			if(grid_to_blcks[key.first].size()>1) {
+				no_overlap=0;
+				for(int bid : grid_to_blcks[key.first]) {
+					Blck &b = ic.get_blck(bid);
+					b.display_pos(bid);
+				}
+			}
+		}
+		// check for the four possible directions outward.
+		//for()
 	}
 
 	return 0;

@@ -117,6 +117,7 @@ int main(int argc, char * argv[]) {
 
 			if(iters==10 || placer.is_grid_congested(ic, config)==1) {
 				placer.snap_to_grid(ic, config);
+				break;
 			} else {
 				if(was_placed==1) {
 					LOG(INFO) << "..-* Spreading iter["<<iters<<"] *-..";

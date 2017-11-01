@@ -204,6 +204,11 @@ void drawscreen(void) {
 		if(b.is_pseudo()==0) {
 			if(b.is_fixed()==1) {
 				// draw black;
+				setcolor(DARKGREY);
+				fillarc(b.get_x(), b.get_y(), 0.25, 0.,360.);
+				setcolor(MAGENTA);
+				drawarc(b.get_x(), b.get_y(), 0.25, 0.,360.);
+
 			} else {
 				setcolor(GREEN);
 				fillarc(b.get_x(), b.get_y(), 0.25, 0.,360.);

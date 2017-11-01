@@ -514,8 +514,7 @@ int Placer::is_grid_congested(IC ic, Configholder config) {
 	p_overfill=100*((float)overfill_count/(grid_size*grid_size));
 	LOG(INFO) << "Percentage of Slots filled: "<< p_overfill;
 
-	if(p_overfill<25) {
-		//cin.ignore();
+	if(p_overfill<=25) {
 		congestion_managable=1;
 	}
 
@@ -524,10 +523,9 @@ int Placer::is_grid_congested(IC ic, Configholder config) {
 } 
 
 int Placer::snap_to_grid(IC &ic, Configholder config) {
-	int no_overlap=0;
-	int overfill_count;
-	int start_fresh=0;
-	int okay=0;
+
+	int was_freed=0;
+
 	int i, j;
 	int grid_size=ic.get_grid_size();
 
@@ -547,7 +545,6 @@ int Placer::snap_to_grid(IC &ic, Configholder config) {
 	for(vector<int> row : blck_to_nets_t) {
 		Blck &b = ic.get_blck(row[0]);
 		if(b.is_pseudo()==0) {
-			//b.display_pos(row[0]);
 			if(b.get_x() >= grid_size) {
 				LOG(ERROR) << "Placer panic. Exiting [x too large: " << b.get_x() <<"]";
 				exit(-1);
@@ -557,16 +554,17 @@ int Placer::snap_to_grid(IC &ic, Configholder config) {
 				LOG(ERROR) << "Placer panic. Exiting [y too large: " << b.get_y() << "]";
 				exit(-1);
 			}
-			if(grid_to_blcks.count(make_pair((int)floor(b.get_x()), (int)floor(b.get_y())))>0) {
-			} else {
-				LOG(ERROR) << "Placer panic. Exiting [grid doesnt exist.]";				
-			}
-			grid_to_blcks[make_pair((int)floor(b.get_x()), (int)floor(b.get_y()))].push_back(row[0]);
 
 			b.set_x(floor(b.get_x())+0.5);
 			b.set_y(floor(b.get_y())+0.5);
+			
+			if(grid_to_blcks.count(make_pair((int)floor(b.get_x()), (int)floor(b.get_y())))>0) {
+				grid_to_blcks[make_pair((int)floor(b.get_x()), (int)floor(b.get_y()))].push_back(row[0]);
+			} else {
+				LOG(ERROR) << "Placer panic. Exiting [grid doesnt exist.]";	
+				exit(-1);		
+			}
 
-			//b.display_pos(row[0]);
 		}
 	}
 
@@ -579,57 +577,53 @@ int Placer::snap_to_grid(IC &ic, Configholder config) {
 
 		for(const auto& key : grid_to_blcks) {
 			if(grid_to_blcks[key.first].size()>1) {
+				j=0;
 				for(int bid : key.second) {
-					Blck &b = ic.get_blck(bid);
-					
-					int was_freed=0;
 
-					unordered_map <pair<int, int> , int, pair_hash > where_to_look;	
-					where_to_look[key.first]=0;
+					if(ic.get_blck(bid).is_fixed() == 0) {
+						unordered_map <pair<int, int> , int, pair_hash > where_to_look;	
+						where_to_look[key.first]=0;
 
 
-					while(was_freed==0) {
-						for(auto& new_key : where_to_look) {
-							int cx = new_key.first.first;
-							int cy = new_key.first.second;
-							pair<int, int> where_to_place;
+						while(was_freed==0) {
+							for(auto& new_key : where_to_look) {
+								int cx = new_key.first.first;
+								int cy = new_key.first.second;
+								pair<int, int> where_to_place;
 
-							for(int i=0; i< new_x_inspect.size(); ++i) {
-								if(grid_to_blcks.count(make_pair(cx + new_x_inspect[i], cy + new_y_inspect[i]))>0) {
-		 							if(grid_to_blcks[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])].size()==0) {
+								for(int i=0; i< new_x_inspect.size(); ++i) {
+									if(grid_to_blcks.count(make_pair(cx + new_x_inspect[i], cy + new_y_inspect[i]))>0) {
+			 							if(grid_to_blcks[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])].size()==0) {
+												Blck &b = ic.get_blck(bid);
+				 								b.set_x(cx + new_x_inspect[i]+0.5);
+				 								b.set_y(cy+new_y_inspect[i]+0.5);
+					 								
+					 							grid_to_blcks[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])].push_back(grid_to_blcks[key.first][j]);
+					 							grid_to_blcks[key.first].erase(grid_to_blcks[key.first].begin()+j);
+				 								
+				 								goto blck_freed;
 
-		 								Blck &b = ic.get_blck(bid);
-		 								b.set_x(cx + new_x_inspect[i]+0.5);
-		 								
-		 								b.set_y(cy+new_y_inspect[i]+0.5);
-
-		 								grid_to_blcks[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])].push_back(grid_to_blcks[key.first][0]);
-		 								grid_to_blcks[key.first].erase(grid_to_blcks[key.first].begin());
-		 								was_freed=1;
-		 								goto blck_freed;
-		 							} else {
-		 								if(where_to_look.count(make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])) <= 0) {
-		 									where_to_look[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])]=0;
-		 								}
-		 							}
+			 							} else {
+			 								if(where_to_look.count(make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])) <= 0) {
+			 									where_to_look[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])]=0;
+			 								}
+			 							}
+									}
 								}
 							}
 						}
 					}
+					++j;
 				}
-			}
+			} 
 		}
 
 	for(const auto& key : grid_to_blcks) {
-		if(grid_to_blcks[make_pair(key.first.first, key.first.second)].size()>1) {
-			LOG(ERROR) << "Grid ["<<key.first.first <<"]["<< key.first.second<< "]"; 
-			overfill_count+=grid_to_blcks[make_pair(key.first.first, key.first.second)].size();
-			for(int gh: grid_to_blcks[make_pair(key.first.first, key.first.second)]) {
-				ic.get_blck(gh).display_pos(gh);
+			LOG(INFO) << "Grid Pos --x["<<key.first.first<<"] y["<<key.first.second<<"]";
+			for(int bid : key.second) {
+				//ic.get_blck(bid).display_blck();
+				LOG(INFO) << "    BID: "<<bid;
 			}
-		} else if(grid_to_blcks[make_pair(key.first.first, key.first.second)].size()==0) {
-			LOG(INFO) <<  "Free Block @ >> "<<key.first.first << ", "<<key.first.second;
-		}
 	}
 
 	

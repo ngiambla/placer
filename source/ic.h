@@ -14,6 +14,7 @@ class IC {
 		map<int, vector<int> > nbs_map;
 
 	public:
+		IC();
 		IC(Configholder config);
 		void display_blcks();
 		Blck &get_blck(int id);

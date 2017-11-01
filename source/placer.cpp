@@ -515,7 +515,7 @@ int Placer::is_grid_congested(IC ic, Configholder config) {
 	LOG(INFO) << "Percentage of Slots filled: "<< p_overfill;
 
 	if(p_overfill<25) {
-		cin.ignore();
+		//cin.ignore();
 		congestion_managable=1;
 	}
 

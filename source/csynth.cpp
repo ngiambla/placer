@@ -116,7 +116,11 @@ int main(int argc, char * argv[]) {
 			LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl() << "\n";
 
 			if(iters==10 || placer.is_grid_congested(ic, config)==1) {
-				placer.snap_to_grid(ic, config);
+				placer.snap_to_grid(ic, config);			
+				for(vector<int> row : config.get_blck_to_nets()) {
+					ic.get_blck(row[0]).display_pos(row[0]);
+				}
+				LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl() << "\n";
 				break;
 			} else {
 				if(was_placed==1) {

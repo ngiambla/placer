@@ -380,10 +380,10 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
   			for(int bid : class_to_blck[j]) {
   				Blck &b = ic.get_blck(bid);
 				
-				uniform_real_distribution<double> x_dist(b.get_x(),1);
+				uniform_real_distribution<double> x_dist(b.get_x(),1/iter);
 				b.set_x(abs(x_dist(generator)));
 
-				uniform_real_distribution<double> y_dist(b.get_y(),1);
+				uniform_real_distribution<double> y_dist(b.get_y(),1/iter);
 				b.set_y(abs(y_dist(generator)));
 
 				config.update_blck_to_net(bid, last_net_id);
@@ -449,10 +449,10 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		next_y_cuts[3+i*4]=cur_y_cuts[i]+resize_inc;
 
 
-		q1_w *= abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
-		q2_w *= abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
-		q3_w *= abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
-		q4_w *= abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
+		// q1_w *= abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
+		// q2_w *= abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
+		// q3_w *= abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
+		// q4_w *= abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
 
 		q1_w+=(1-1/iter);
 		q2_w+=(1-1/iter);
@@ -547,14 +547,14 @@ int Placer::snap_to_grid(IC &ic, Configholder config) {
 	for(vector<int> row : blck_to_nets_t) {
 		Blck &b = ic.get_blck(row[0]);
 		if(b.is_pseudo()==0) {
-			b.display_pos(row[0]);
+			//b.display_pos(row[0]);
 			if(b.get_x() >= grid_size) {
-				LOG(ERROR) << "Placer panic. Exiting [x too large]";
+				LOG(ERROR) << "Placer panic. Exiting [x too large: " << b.get_x() <<"]";
 				exit(-1);
 			} 
 
 			if(b.get_y() >= grid_size) {
-				LOG(ERROR) << "Placer panic. Exiting [y too large]";
+				LOG(ERROR) << "Placer panic. Exiting [y too large: " << b.get_y() << "]";
 				exit(-1);
 			}
 			if(grid_to_blcks.count(make_pair((int)floor(b.get_x()), (int)floor(b.get_y())))>0) {
@@ -566,122 +566,74 @@ int Placer::snap_to_grid(IC &ic, Configholder config) {
 			b.set_x(floor(b.get_x())+0.5);
 			b.set_y(floor(b.get_y())+0.5);
 
-			b.display_pos(row[0]);
+			//b.display_pos(row[0]);
 		}
 	}
 
 	LOG(INFO) << "Snapping To Grid";
 
-	unordered_map <pair<int, int> , int, pair_hash > where_to_look;
-	where_to_look[grid_to_blcks.begin()->first]=0;
-	
+	vector<int> new_x_inspect={-1, -1, -1, 0, 0, 1, 1, 1};
+	vector<int> new_y_inspect={-1, 0, 1, -1, 1, -1, 0, 1};
 
-	while(no_overlap==0) {
+	blck_freed:
 
-		if(start_fresh==1) {
-			where_to_look.clear();
-			where_to_look[grid_to_blcks.begin()->first]=0;
-			start_fresh=0;
+		for(const auto& key : grid_to_blcks) {
+			if(grid_to_blcks[key.first].size()>1) {
+				for(int bid : key.second) {
+					Blck &b = ic.get_blck(bid);
+					
+					int was_freed=0;
+
+					unordered_map <pair<int, int> , int, pair_hash > where_to_look;	
+					where_to_look[key.first]=0;
+
+
+					while(was_freed==0) {
+						for(auto& new_key : where_to_look) {
+							int cx = new_key.first.first;
+							int cy = new_key.first.second;
+							pair<int, int> where_to_place;
+
+							for(int i=0; i< new_x_inspect.size(); ++i) {
+								if(grid_to_blcks.count(make_pair(cx + new_x_inspect[i], cy + new_y_inspect[i]))>0) {
+		 							if(grid_to_blcks[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])].size()==0) {
+
+		 								Blck &b = ic.get_blck(bid);
+		 								b.set_x(cx + new_x_inspect[i]+0.5);
+		 								
+		 								b.set_y(cy+new_y_inspect[i]+0.5);
+
+		 								grid_to_blcks[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])].push_back(grid_to_blcks[key.first][0]);
+		 								grid_to_blcks[key.first].erase(grid_to_blcks[key.first].begin());
+		 								was_freed=1;
+		 								goto blck_freed;
+		 							} else {
+		 								if(where_to_look.count(make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])) <= 0) {
+		 									where_to_look[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])]=0;
+		 								}
+		 							}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
-		for(auto& key: where_to_look) {
-			pair<int, int> t=key.first;
-			pair<int, int> where_to_place;
-			int which_blck=0;
-
-			int min_val=1000;
-			if(where_to_look[t]==0) {
-				LOG(INFO) << "Currently At: [" << key.first.first << "][" <<  key.first.second <<"]";
-
-				overfill_count=0;
-
-				for(int bthing: grid_to_blcks[t] ) {
-					LOG(DEBUG) << "Block: "<<bthing;
-				}
-				while(grid_to_blcks[t].size() > 1) {
-					LOG(INFO) << "searching ...";
-					if(grid_to_blcks.count(make_pair(t.first+1, t.second))>0) {
-						LOG(INFO) << "Checking [" << t.first+1 << "][" <<  t.second <<"]";
-						if(min_val >= grid_to_blcks[make_pair(t.first+1, t.second)].size()) {
-							min_val=grid_to_blcks[make_pair(t.first+1, t.second)].size();
-							where_to_place=make_pair(t.first+1, t.second);
-						}	
-					}
-					if(grid_to_blcks.count(make_pair(t.first, t.second+1))>0) {
-						if(min_val >= grid_to_blcks[make_pair(t.first, t.second+1)].size()) {
-						LOG(INFO) << "Checking [" << t.first << "][" <<  t.second+1 <<"]";
-							min_val=grid_to_blcks[make_pair(t.first, t.second+1)].size();
-							where_to_place=make_pair(t.first, t.second+1);						
-						}	
-					}
-					if(grid_to_blcks.count(make_pair(t.first+1, t.second+1))>0) {
-						LOG(INFO) << "Checking [" << t.first+1 << "][" <<  t.second+1 <<"]";
-						if(min_val >= grid_to_blcks[make_pair(t.first+1, t.second+1)].size()) {
-							min_val=grid_to_blcks[make_pair(t.first+1, t.second+1)].size();
-							where_to_place=make_pair(t.first+1, t.second+1);
-						}	
-					}
-					Blck &b=ic.get_blck(grid_to_blcks[t][which_blck]);
-					LOG(INFO) << "Block ID: " << grid_to_blcks[t][which_blck];
-
-					if(b.is_fixed()==0) {
-						b.set_x(where_to_place.first+0.5);
-						b.set_y(where_to_place.second+0.5);
-
-						grid_to_blcks[where_to_place].push_back(grid_to_blcks[t][which_blck]);
-						grid_to_blcks[t].erase(grid_to_blcks[t].begin());
-					} else {
-						which_blck++;
-					}
-					if(which_blck > grid_to_blcks[t].size()) {
-						break;
-					}
-
-				}
-
-				if(where_to_look.count(make_pair(t.first+1, t.second))<=0 && grid_to_blcks.count(make_pair(t.first+1, t.second))>0) {
-					where_to_look[make_pair(t.first+1, t.second)]=0;
-					LOG(INFO) << "Adding [" << t.first+1 << "][" <<  t.second <<"]";
-				} 
-				if(where_to_look.count(make_pair(t.first, t.second+1))<=0 && grid_to_blcks.count(make_pair(t.first, t.second+1))>0) {
-					where_to_look[make_pair(t.first, t.second+1)]=0;
-					LOG(INFO) << "Adding [" << t.first << "][" <<  t.second+1 <<"]";
-				} 
-				if(where_to_look.count(make_pair(t.first+1, t.second+1))<=0 && grid_to_blcks.count(make_pair(t.first+1, t.second+1))>0) {
-					where_to_look[make_pair(t.first+1, t.second+1)]=0;
-					LOG(INFO) << "Adding [" << t.first+1 << "][" <<  t.second+1 <<"]";
-				} 
-
-				where_to_look[key.first]=1;
-				LOG(DEBUG) << "Current Size inspection list: " <<where_to_look.size();
-				for(const auto& key : grid_to_blcks) {
-					if(grid_to_blcks[make_pair(key.first.first, key.first.second)].size()>1) {
-						LOG(ERROR) << "Grid ["<<key.first.first <<"]["<< key.first.second<< "]"; 
-						overfill_count+=grid_to_blcks[make_pair(key.first.first, key.first.second)].size();
-						for(int gh: grid_to_blcks[make_pair(key.first.first, key.first.second)]) {
-							ic.get_blck(gh).display_pos(gh);
-						}
-					} else if(grid_to_blcks[make_pair(key.first.first, key.first.second)].size()==0) {
-						LOG(INFO) <<  "Free Block @ >> "<<key.first.first << ", "<<key.first.second;
-					}
-				}
-				LOG(ERROR) << "Overfill count: "<<overfill_count;
-				if(overfill_count==0) {
-					no_overlap=1;
-				}
-				if(where_to_look.size()==grid_size*grid_size) {
-					start_fresh=1;
-				}
-				
-				cin.ignore();
+	for(const auto& key : grid_to_blcks) {
+		if(grid_to_blcks[make_pair(key.first.first, key.first.second)].size()>1) {
+			LOG(ERROR) << "Grid ["<<key.first.first <<"]["<< key.first.second<< "]"; 
+			overfill_count+=grid_to_blcks[make_pair(key.first.first, key.first.second)].size();
+			for(int gh: grid_to_blcks[make_pair(key.first.first, key.first.second)]) {
+				ic.get_blck(gh).display_pos(gh);
 			}
-			
-
+		} else if(grid_to_blcks[make_pair(key.first.first, key.first.second)].size()==0) {
+			LOG(INFO) <<  "Free Block @ >> "<<key.first.first << ", "<<key.first.second;
 		}
 	}
+
 	
 	calculate_hpwl(ic, config);
-	LOG(INFO) << "Final HPWL: "<<get_hpwl();
 	return 0;
 }
 

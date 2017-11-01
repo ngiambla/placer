@@ -218,6 +218,23 @@ void drawscreen(void) {
 			}
 		}
 	}
+	// if(show_clique) {
+	// 	setcolor(RED);
+	// 	setlinewidth(2);
+
+	// 	for(vector<int> row : config.get_blck_to_nets()) {
+
+	// 		for(const auto& key : config.get_nbs_map()) {
+	// 			for(int bid : key.second) {
+	// 				if(row[0]!=bid) {
+	// 					Blck b1=ic.get_blck(row[0]);
+	// 					Blck b2=ic.get_blck(row[0]);
+	// 					drawline(b1.get_x(), b1.get_y(), b2.get_x(), b2.get_y());
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
 
 void spread_and_place (void (*drawscreen_ptr) (void)) {

@@ -3,14 +3,34 @@
 extern "C" {
 	#include "umfpack.h"
 }
+#include <unordered_map>
 #include <random>
+
+struct pair_hash {
+    template <class T1, class T2>
+    std::size_t operator () (const std::pair<T1,T2> &p) const {
+        auto h1 = std::hash<T1>{}(p.first);
+        auto h2 = std::hash<T2>{}(p.second);
+
+        // Mainly for demonstration purposes, i.e. works but is overly simple
+        // In the real world, use sth. like boost.hash_combine
+        return h1 ^ h2;  
+    }
+};
+
 
 // void constructors and destructors.
 Placer::Placer() {
-	q1_w=50;
-	q2_w=50;
-	q3_w=50;
-	q4_w=50;
+	q1_w=0.5;
+	q2_w=0.5;
+	q3_w=0.5;
+	q4_w=0.5;
+
+	wc1=3;			// weight per class;
+	wc2=3; 
+	wc3=3; 
+	wc4=3;
+
 }
 
 Placer::~Placer() {}
@@ -153,7 +173,6 @@ int Placer::place(IC &ic, Configholder config) {
 		Tx_t.push_back(key.second);
 	}
 
-	LOG(INFO) << "-- Compressing Matrix.";
 	nz=Tx_t.size();
 	
 	Ti=&Ti_t[0];
@@ -168,8 +187,6 @@ int Placer::place(IC &ic, Configholder config) {
 	Ax=new double[nz];
 	x=new double[n];
 
-	LOG(INFO) << "-- Non Zero Entries: "<< nz;
-
 	status=umfpack_di_triplet_to_col(n, n, nz, Ti, Tj, Tx, Ap, Ai, Ax, NULL);
 	if (status != UMFPACK_OK) {
 		return EXIT_FAILURE;
@@ -177,18 +194,14 @@ int Placer::place(IC &ic, Configholder config) {
 
 
 
-	LOG(INFO) << "-- Solving for X";
 	solve_equation(n, Ap, Ai, Ax, x, b_x, 0);		// indicates x (only for semantic rep);
 
-	LOG(INFO) << "About to modify X.";
 	for(i=0; i< n; ++i) {
 		ic.get_blck(idx_to_blck[i]).set_x(x[i]);
 	}
 	
-	LOG(INFO) << "-- Solving for Y";
 	solve_equation(n, Ap, Ai, Ax, x, b_y, 1);		// indicates y '''''''''''''	
 
-	LOG(INFO) << "About to modify Y";
 	for(i=0; i< n; ++i) {
 		ic.get_blck(idx_to_blck[i]).set_y(x[i]);
 	}
@@ -211,7 +224,6 @@ int Placer::place(IC &ic, Configholder config) {
 //
 int Placer::spread(IC &ic, Configholder &config, int iter) {
 	int spread_status=1;
-	int init_run=0;
 	int i=0, j=0, last_net_id, last_blck_id;
 
 	float num_of_mv_blcks_per_quad=(float)(config.get_blck_to_nets().size()-config.get_ref_blcks().size())/4;
@@ -231,7 +243,6 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	for(i=0; i<cur_x_cuts.size(); ++i) {
 
 		map<int, vector<int> > class_to_blck; 				// define class holders;
-		double wc1=1, wc2=1, wc3=1, wc4=1;				// weight per class;
 
 		// define new pseudo blocks for expansion.
 		Blck b_1;
@@ -294,69 +305,85 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		// set blcks to classes.
 		last_net_id=config.get_nbs_map().rbegin()->first + 1;
 		default_random_engine generator; // used for rand number gens.
+		if(i==0) {
+			for(vector<int> row : config.get_blck_to_nets()) {
+
+				int bid=row[0];
+				Blck &blck_to_add=ic.get_blck(bid);
+				blck_to_add.refresh();
+			}			
+		}
 
 		for(vector<int> row : config.get_blck_to_nets()) {
 
 			int bid=row[0];
 
 			Blck &blck_to_add=ic.get_blck(bid);
-			discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
-  			
-  			int potential_class=distribution(generator);	
-  			
-  			if(blck_to_add.is_fixed()==0) {
-	  			switch(potential_class) {
-	  				case 0:
-	  					class_to_blck[0].push_back(bid);
-	  					if(wc1==2) {
-	  						wc1=1;
-	  					}
-	  					wc2=2;
-	  					wc3=2;
-	  					wc4=2;
-	  					break;
-	  				case 1:
-	  					class_to_blck[1].push_back(bid);
-	  					if(wc2==2) {
-	  						wc2=1;
-	  					}
-	  					wc1=2;
-	  					wc3=2;
-	  					wc4=2; 
-	  					break;
-	  				case 2:
-	  					class_to_blck[2].push_back(bid);
-	  					if(wc3==2) {
-	  						wc3=1;
-	  					}
-	  					wc1=2;
-	  					wc2=2;
-	  					wc4=2; 
-	  					break;
-	  				case 3:
-	  					class_to_blck[3].push_back(bid);
-	  					if(wc4==2) {
-	  						wc4=1;
-	  					}
-	  					wc1=2;
-	  					wc2=2;
-	  					wc3=2; 
-	  					break;
-	  			}
-  			} else if(blck_to_add.is_pseudo()==0) {
-  				if(i==0){
- 	 				blck_to_add.update_pseudo_blck_weight();
-  				}
-  			}
+			if(blck_to_add.is_stale()==0) {
+	  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to()==i || blck_to_add.belongs_to() == -2)) {
+					
+					discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
+					int potential_class=distribution(generator);
+
+		  			switch(potential_class) {
+		  				case 0:
+		  					class_to_blck[0].push_back(bid);
+		  					blck_to_add.set_to_group((i-i%4)+i*4);
+		  					if(wc1==3) {
+		  						wc1=1;
+		  					}
+		  					wc2=3;
+		  					wc3=3;
+		  					wc4=3;
+		  					break;
+		  				case 1:
+		  					class_to_blck[1].push_back(bid);
+		  					blck_to_add.set_to_group((i+1-i%4)+i*4);
+		  					if(wc2==3) {
+		  						wc2=1;
+		  					}
+		  					wc1=3;
+		  					wc3=3;
+		  					wc4=3;
+		  					break;
+		  				case 2:
+		  					class_to_blck[2].push_back(bid);
+		  					blck_to_add.set_to_group((i+2-i%4)+i*4);
+
+		  					if(wc3==3) {
+		  						wc3=1;
+		  					}
+		  					wc1=3;
+		  					wc2=3;
+		  					wc4=3; 
+		  					break;
+		  				case 3:
+		  					class_to_blck[3].push_back(bid);
+		  					blck_to_add.set_to_group((i+3-i%4)+i*4);
+
+		  					if(wc4==3) {
+		  						wc4=1;
+		  					}
+		  					wc1=3;
+		  					wc2=3;
+		  					wc3=3; 
+		  					break;
+		  			}
+
+				} else if(blck_to_add.is_pseudo()==1) {
+	 				blck_to_add.update_pseudo_blck_weight();
+				}
+			}
 		}
+
   		for(j=0;j<4;++j) {
   			for(int bid : class_to_blck[j]) {
   				Blck &b = ic.get_blck(bid);
 				
-				uniform_real_distribution<double> x_dist(b.get_x(),1);
+				uniform_real_distribution<double> x_dist(b.get_x(),1/iter);
 				b.set_x(abs(x_dist(generator)));
 
-				uniform_real_distribution<double> y_dist(b.get_y(),1);
+				uniform_real_distribution<double> y_dist(b.get_y(),1/iter);
 				b.set_y(abs(y_dist(generator)));
 
 				config.update_blck_to_net(bid, last_net_id);
@@ -410,7 +437,6 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		}
 
 
-
 		// define new
 		next_x_cuts[0+i*4]=cur_x_cuts[i]-resize_inc;
 		next_x_cuts[1+i*4]=cur_x_cuts[i]+resize_inc;
@@ -422,10 +448,16 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		next_y_cuts[2+i*4]=cur_y_cuts[i]+resize_inc;
 		next_y_cuts[3+i*4]=cur_y_cuts[i]+resize_inc;
 
-		q1_w*=abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
-		q2_w*=abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
-		q3_w*=abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
-		q4_w*=abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
+
+		// q1_w *= abs(1-(class_to_blck[0].size())/num_of_mv_blcks_per_quad); 
+		// q2_w *= abs(1-(class_to_blck[1].size())/num_of_mv_blcks_per_quad); 
+		// q3_w *= abs(1-(class_to_blck[2].size())/num_of_mv_blcks_per_quad); 
+		// q4_w *= abs(1-(class_to_blck[3].size())/num_of_mv_blcks_per_quad); 
+
+		q1_w+=(1-1/iter);
+		q2_w+=(1-1/iter);
+		q3_w+=(1-1/iter);
+		q4_w+=(1-1/iter);
 
 	}
 	printf("\n");
@@ -452,20 +484,159 @@ float Placer::get_hpwl() {
 
 int Placer::is_grid_congested(IC ic, Configholder config) {
 	int congestion_managable=0;
+	int grid_size=config.get_grid_size();
+	float p_overfill=0;
+	int i,j;
+
+	int overfill_count=0;
+
+	map< pair<int, int> , vector<int> > grid_to_blcks;
+	vector<int> blck_ids;
+
+	for(i=0; i< grid_size; ++i) {
+		for(j=0; j< grid_size; ++j) {
+			grid_to_blcks[make_pair(i,j)]=blck_ids;
+		}
+	}
+
+	for(vector<int> row : config.get_blck_to_nets()) {
+		Blck b = ic.get_blck(row[0]);
+		if(b.is_pseudo()==0) {
+			grid_to_blcks[make_pair((int)floor(b.get_x()),(int)floor(b.get_y()))].push_back(row[0]);				
+		}		
+	}
+
+	for(const auto& key : grid_to_blcks) {
+		if(grid_to_blcks[make_pair(key.first.first, key.first.second)].size()>1) {
+			overfill_count+=grid_to_blcks[make_pair(key.first.first, key.first.second)].size();
+		}
+	}
+	p_overfill=100*((float)overfill_count/(grid_size*grid_size));
+	LOG(INFO) << "Percentage of Slots filled: "<< p_overfill;
+
+	if(p_overfill<25) {
+		cin.ignore();
+		congestion_managable=1;
+	}
+
 
 	return congestion_managable;
 } 
 
 int Placer::snap_to_grid(IC &ic, Configholder config) {
 	int no_overlap=0;
+	int overfill_count;
+	int start_fresh=0;
+	int okay=0;
+	int i, j;
+	int grid_size=ic.get_grid_size();
 
-	// need to conduct BFS-like search
+	vector< vector<int> > blck_to_nets_t=config.get_blck_to_nets();
 
-	LOG(INFO) << "Snapping to Grid";
-	while(no_overlap==0) {
+	map< pair<int, int> , vector<int> > grid_to_blcks;
+	vector<int> blck_ids;
 
+	for(i=0; i< grid_size; ++i) {
+		for(j=0; j< grid_size; ++j) {
+			grid_to_blcks[make_pair(i,j)]=blck_ids;
+
+		}
 	}
 
+	LOG(INFO) << "Legalizing Blocks";
+	for(vector<int> row : blck_to_nets_t) {
+		Blck &b = ic.get_blck(row[0]);
+		if(b.is_pseudo()==0) {
+			//b.display_pos(row[0]);
+			if(b.get_x() >= grid_size) {
+				LOG(ERROR) << "Placer panic. Exiting [x too large: " << b.get_x() <<"]";
+				exit(-1);
+			} 
+
+			if(b.get_y() >= grid_size) {
+				LOG(ERROR) << "Placer panic. Exiting [y too large: " << b.get_y() << "]";
+				exit(-1);
+			}
+			if(grid_to_blcks.count(make_pair((int)floor(b.get_x()), (int)floor(b.get_y())))>0) {
+			} else {
+				LOG(ERROR) << "Placer panic. Exiting [grid doesnt exist.]";				
+			}
+			grid_to_blcks[make_pair((int)floor(b.get_x()), (int)floor(b.get_y()))].push_back(row[0]);
+
+			b.set_x(floor(b.get_x())+0.5);
+			b.set_y(floor(b.get_y())+0.5);
+
+			//b.display_pos(row[0]);
+		}
+	}
+
+	LOG(INFO) << "Snapping To Grid";
+
+	vector<int> new_x_inspect={-1, -1, -1, 0, 0, 1, 1, 1};
+	vector<int> new_y_inspect={-1, 0, 1, -1, 1, -1, 0, 1};
+
+	blck_freed:
+
+		for(const auto& key : grid_to_blcks) {
+			if(grid_to_blcks[key.first].size()>1) {
+				for(int bid : key.second) {
+					Blck &b = ic.get_blck(bid);
+					
+					int was_freed=0;
+
+					unordered_map <pair<int, int> , int, pair_hash > where_to_look;	
+					where_to_look[key.first]=0;
+
+
+					while(was_freed==0) {
+						for(auto& new_key : where_to_look) {
+							int cx = new_key.first.first;
+							int cy = new_key.first.second;
+							pair<int, int> where_to_place;
+
+							for(int i=0; i< new_x_inspect.size(); ++i) {
+								if(grid_to_blcks.count(make_pair(cx + new_x_inspect[i], cy + new_y_inspect[i]))>0) {
+		 							if(grid_to_blcks[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])].size()==0) {
+
+		 								Blck &b = ic.get_blck(bid);
+		 								b.set_x(cx + new_x_inspect[i]+0.5);
+		 								
+		 								b.set_y(cy+new_y_inspect[i]+0.5);
+
+		 								grid_to_blcks[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])].push_back(grid_to_blcks[key.first][0]);
+		 								grid_to_blcks[key.first].erase(grid_to_blcks[key.first].begin());
+		 								was_freed=1;
+		 								goto blck_freed;
+		 							} else {
+		 								if(where_to_look.count(make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])) <= 0) {
+		 									where_to_look[make_pair( cx + new_x_inspect[i], cy + new_y_inspect[i])]=0;
+		 								}
+		 							}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+	for(const auto& key : grid_to_blcks) {
+		if(grid_to_blcks[make_pair(key.first.first, key.first.second)].size()>1) {
+			LOG(ERROR) << "Grid ["<<key.first.first <<"]["<< key.first.second<< "]"; 
+			overfill_count+=grid_to_blcks[make_pair(key.first.first, key.first.second)].size();
+			for(int gh: grid_to_blcks[make_pair(key.first.first, key.first.second)]) {
+				ic.get_blck(gh).display_pos(gh);
+			}
+		} else if(grid_to_blcks[make_pair(key.first.first, key.first.second)].size()==0) {
+			LOG(INFO) <<  "Free Block @ >> "<<key.first.first << ", "<<key.first.second;
+		}
+	}
+
+	
+	calculate_hpwl(ic, config);
 	return 0;
 }
+
+
+
 

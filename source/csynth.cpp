@@ -99,7 +99,6 @@ void initialize_system(char * filename) {
 // main call.
 int main(int argc, char * argv[]) {
 	char filename[20]="../circuits/";
-	char ans;
 	int was_placed=0;
 	int iters=1;
 
@@ -115,13 +114,23 @@ int main(int argc, char * argv[]) {
 				ic.get_blck(row[0]).display_pos(row[0]);
 			}
 			LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl() << "\n";
-			
-			if(was_placed==1) {
-				LOG(INFO) << "..-* Spreading iter["<<iters<<"] *-..";
 
-				placer.spread(ic, config, iters);
-				LOG(INFO) << "..-* Spreading Complete. *-..";
-			}
+			if(iters==10 || placer.is_grid_congested(ic, config)==1) {
+				placer.snap_to_grid(ic, config);			
+				for(vector<int> row : config.get_blck_to_nets()) {
+					ic.get_blck(row[0]).display_pos(row[0]);
+				}
+				LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl() << "\n";
+				break;
+			} else {
+				if(was_placed==1) {
+					LOG(INFO) << "..-* Spreading iter["<<iters<<"] *-..";
+
+					placer.spread(ic, config, iters);
+					LOG(INFO) << "..-* Spreading Complete. *-..";
+				}
+			}			
+
 
 			cin.ignore();
 			++iters;

@@ -14,10 +14,8 @@ class Placer {
 		void find_sys();
 		void calculate_hpwl(IC ic, Configholder config);
 
-		float q1_w;
-		float q2_w;
-		float q3_w;
-		float q4_w;
+		float q1_w, q2_w, q3_w, q4_w; 	//edge weights;
+		float wc1, wc2, wc3, wc4;		//class weights;
 
 	public:
 		Placer();

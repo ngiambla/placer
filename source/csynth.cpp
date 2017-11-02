@@ -157,7 +157,7 @@ int main(int argc, char * argv[]) {
 }
 
 void drawscreen(void) {
-	int i, j;
+	int i;
 	int max_size=ic.get_grid_size();
 	set_draw_mode (DRAW_NORMAL);
 	char buf_num_holder[255];

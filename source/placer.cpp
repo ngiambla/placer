@@ -498,7 +498,6 @@ float Placer::get_hpwl() {
 
 
 int Placer::is_grid_congested(IC ic, Configholder config) {
-	int congestion_managable=0;
 	int grid_size=ic.get_grid_size();
 	float num_of_blocks=(float)(config.get_blck_to_nets().size()-config.get_ref_blcks().size());
 	float overfill_count=0;
@@ -532,8 +531,6 @@ int Placer::is_grid_congested(IC ic, Configholder config) {
 	} else {
 		return 0;
 	}
-
-	//return 1;
 } 
 
 int Placer::snap_to_grid(IC &ic, Configholder config) {

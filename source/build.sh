@@ -12,4 +12,5 @@ cd ../../;
 
 
 echo "-- Building Placer"; 
+make clean;
 make;

@@ -18,6 +18,13 @@ $ make
 
 This should produce no errors, and minimal warnings.
 
+If there are any errors during execution, please attempt the following:
+
+```bash
+$ make clean
+$ make
+```
+
 ## Usage ##
 
 You can begin executing the placer by executing a terminal, and entering:

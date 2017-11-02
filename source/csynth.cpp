@@ -12,6 +12,7 @@ IC ic; 							// Reference to Integrated Circuit
 Placer placer;					// Reference to placer;
 
 bool show_clique=true;
+bool show_nums=true;
 int iters=1;
 int finished=0;
 char msg[255]="";
@@ -22,6 +23,7 @@ void drawscreen(void);
 
 void spread_and_place (void (*drawscreen_ptr) (void));
 void toggle_clique_model (void (*drawscreen_ptr) (void));
+void toggle_block_num (void (*drawscreen_ptr) (void));
 
 void act_on_button_press (float x, float y);
 void act_on_mouse_move (float x, float y);
@@ -136,8 +138,9 @@ int main(int argc, char * argv[]) {
 
 		clearscreen();
 
-   		create_button ("Window", "Nets [1]", toggle_clique_model);
       	create_button ("Window", "Step >>", spread_and_place);
+      	create_button ("Window", "Show #[1]", toggle_block_num);
+   		create_button ("Window", "Nets [1]", toggle_clique_model);
 
 		update_message(msg);
 
@@ -157,6 +160,7 @@ void drawscreen(void) {
 	int i, j;
 	int max_size=ic.get_grid_size();
 	set_draw_mode (DRAW_NORMAL);
+	char buf_num_holder[255];
 	clearscreen();
 
 	//draw grid;
@@ -190,12 +194,13 @@ void drawscreen(void) {
 				drawarc(b.get_x(), b.get_y(), 0.25, 0.,360.);
 				//draw grey;
 			}
-		} /*else {
-			setcolor(DARKGREY);
-			fillarc(b.get_x(), b.get_y(), 0.25, 0.,360.);
-			setcolor(BLACK);
-			drawarc(b.get_x(), b.get_y(), 0.25, 0.,360.);			
-		}*/
+			if(show_nums) {
+				setcolor(BLACK);
+				setfontsize (10);
+				sprintf(buf_num_holder, "[%d]", row[0]);
+				drawtext (b.get_x(),b.get_y(),buf_num_holder, 150.0);
+			}
+		}
 	}
 	if(show_clique) {
 		setcolor(RED);
@@ -257,6 +262,15 @@ void toggle_clique_model(void (*drawscreen_ptr) (void)) {
 	sprintf (new_button_name, "Nets [%d]",show_clique);
 	change_button_text (old_button_name, new_button_name);
 	drawscreen();
+}
+
+void toggle_block_num(void (*drawscreen_ptr) (void)) {
+	char old_button_name[200], new_button_name[200];
+	sprintf (old_button_name, "Show #[%d]",show_nums);
+	show_nums=!show_nums;
+	sprintf (new_button_name, "Show #[%d]",show_nums);
+	change_button_text (old_button_name, new_button_name);
+	drawscreen();	
 }
 
 void act_on_button_press (float x, float y) {

@@ -259,6 +259,8 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		Blck b_3;
 		Blck b_4;
 
+		int current_count=0;
+
 		last_blck_id=config.get_blck_to_nets()[config.get_blck_to_nets().size()-1][0];
 		printf("Spreading: %3.2f%%\r", (float)100*i/cur_x_cuts.size());
 
@@ -332,43 +334,65 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 			if(blck_to_add.is_stale()==0) {
 	  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to() == i || blck_to_add.belongs_to() == -2)) {
 					
-					discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
-					int potential_class=distribution(generator);
+					if(iter<=1) {
+						discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
+						int potential_class=distribution(generator);
 
-		  			switch(potential_class) {
-		  				case 0:
-		  					class_to_blck[0].push_back(bid);
-		  					blck_to_add.set_to_group((i-i%4)+i*4);
-		  					wc1*=0.5;
-		  					wc2+=1;
-		  					wc3+=1;
-		  					wc4+=1;
-		  					break;
-		  				case 1:
-		  					class_to_blck[1].push_back(bid);
-		  					blck_to_add.set_to_group((i+1-i%4)+i*4);
-		  					wc1+=1;
-		  					wc2*=0.5;
-		  					wc3+=1;
-		  					wc4+=1;	  					
-		  					break;
-		  				case 2:
-		  					class_to_blck[2].push_back(bid);
-		  					blck_to_add.set_to_group((i+2-i%4)+i*4);
-		  					wc1+=1;
-		  					wc2+=1;
-		  					wc3*=0.5;
-		  					wc4+=1;
-		  					break;
-		  				case 3:
-		  					class_to_blck[3].push_back(bid);
-		  					blck_to_add.set_to_group((i+3-i%4)+i*4);
-		  					wc1+=1;
-		  					wc2+=1;
-		  					wc3+=1;	
-		  					wc4*=0.5;
-		  					break;
-		  			}
+			  			switch(potential_class) {
+			  				case 0:
+			  					class_to_blck[0].push_back(bid);
+			  					blck_to_add.set_to_group((i-i%4)+i*4);
+			  					wc1*=0.5;
+			  					wc2+=1;
+			  					wc3+=1;
+			  					wc4+=1;
+			  					break;
+			  				case 1:
+			  					class_to_blck[1].push_back(bid);
+			  					blck_to_add.set_to_group((i+1-i%4)+i*4);
+			  					wc1+=1;
+			  					wc2*=0.5;
+			  					wc3+=1;
+			  					wc4+=1;	  					
+			  					break;
+			  				case 2:
+			  					class_to_blck[2].push_back(bid);
+			  					blck_to_add.set_to_group((i+2-i%4)+i*4);
+			  					wc1+=1;
+			  					wc2+=1;
+			  					wc3*=0.5;
+			  					wc4+=1;
+			  					break;
+			  				case 3:
+			  					class_to_blck[3].push_back(bid);
+			  					blck_to_add.set_to_group((i+3-i%4)+i*4);
+			  					wc1+=1;
+			  					wc2+=1;
+			  					wc3+=1;	
+			  					wc4*=0.5;
+			  					break;
+			  			}
+					} else {
+			  			switch(current_count) {
+			  				case 0:
+			  					class_to_blck[0].push_back(bid);
+			  					blck_to_add.set_to_group((i-i%4)+i*4);
+			  					break;
+			  				case 1:
+			  					class_to_blck[1].push_back(bid);
+			  					blck_to_add.set_to_group((i+1-i%4)+i*4); 					
+			  					break;
+			  				case 2:
+			  					class_to_blck[2].push_back(bid);
+			  					blck_to_add.set_to_group((i+2-i%4)+i*4);
+			  					break;
+			  				case 3:
+			  					class_to_blck[3].push_back(bid);
+			  					blck_to_add.set_to_group((i+3-i%4)+i*4);
+			  					break;
+			  			}
+			  			++current_count;
+					}
 
 				} else if(blck_to_add.is_pseudo()==1) {
 	 				blck_to_add.update_pseudo_blck_weight();
@@ -399,7 +423,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 						new_blcks_to_net[2].push_back(last_net_id);
   						break;
   					case 3:
-  						b.add_edge_weight(last_net_id, q3_w, 1);
+  						b.add_edge_weight(last_net_id, q4_w, 1);
 						b_4.add_edge_weight(last_net_id, q4_w, 1);
 						new_blcks_to_net[3].push_back(last_net_id);
   						break;

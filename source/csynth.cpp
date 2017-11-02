@@ -130,6 +130,9 @@ int main(int argc, char * argv[]) {
 		update_message(msg);
 
 		init_world(0,0, ic.get_grid_size(), ic.get_grid_size());
+		
+		destroy_button("Proceed");
+		destroy_button("PostScript");
 
 		clearscreen();
 
@@ -140,35 +143,6 @@ int main(int argc, char * argv[]) {
 
 		drawscreen();
       	event_loop(act_on_button_press, NULL, NULL, drawscreen); 
-		
-
-		// while(1) {
-		// 	was_placed=placer.place(ic, config);
-		// 	for(vector<int> row : config.get_blck_to_nets()) {
-		// 		ic.get_blck(row[0]).display_pos(row[0]);
-		// 	}
-		// 	LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl() << "\n";
-
-		// 	if(iters==10 || placer.is_grid_congested(ic, config)==1) {
-		// 		placer.snap_to_grid(ic, config);			
-		// 		for(vector<int> row : config.get_blck_to_nets()) {
-		// 			ic.get_blck(row[0]).display_pos(row[0]);
-		// 		}
-		// 		LOG(INFO) << " <placer> HPWL Measurement: "<< placer.get_hpwl() << "\n";
-		// 		break;
-		// 	} else {
-		// 		if(was_placed==1) {
-		// 			LOG(INFO) << "..-* Spreading iter["<<iters<<"] *-..";
-
-		// 			placer.spread(ic, config, iters);
-		// 			LOG(INFO) << "..-* Spreading Complete. *-..";
-		// 		}
-		// 	}			
-
-
-		// 	cin.ignore();
-		// 	++iters;
-		// }
 		
 
 	} else {
@@ -216,25 +190,31 @@ void drawscreen(void) {
 				drawarc(b.get_x(), b.get_y(), 0.25, 0.,360.);
 				//draw grey;
 			}
+		} /*else {
+			setcolor(DARKGREY);
+			fillarc(b.get_x(), b.get_y(), 0.25, 0.,360.);
+			setcolor(BLACK);
+			drawarc(b.get_x(), b.get_y(), 0.25, 0.,360.);			
+		}*/
+	}
+	if(show_clique) {
+		setcolor(RED);
+		setlinewidth(1);
+
+		for(const auto& key : config.get_nbs_map()) {
+			for(int bid : key.second) {
+				for(int pid : key.second) {
+					if(pid!=bid) {
+						Blck b1=ic.get_blck(pid);
+						Blck b2=ic.get_blck(bid);
+						if(b1.is_pseudo()==0 && b2.is_pseudo()==0) {
+							drawline(b1.get_x(), b1.get_y(), b2.get_x(), b2.get_y());
+						}
+					}
+				}
+			}
 		}
 	}
-	// if(show_clique) {
-	// 	setcolor(RED);
-	// 	setlinewidth(2);
-
-	// 	for(vector<int> row : config.get_blck_to_nets()) {
-
-	// 		for(const auto& key : config.get_nbs_map()) {
-	// 			for(int bid : key.second) {
-	// 				if(row[0]!=bid) {
-	// 					Blck b1=ic.get_blck(row[0]);
-	// 					Blck b2=ic.get_blck(row[0]);
-	// 					drawline(b1.get_x(), b1.get_y(), b2.get_x(), b2.get_y());
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
 }
 
 void spread_and_place (void (*drawscreen_ptr) (void)) {
@@ -242,7 +222,7 @@ void spread_and_place (void (*drawscreen_ptr) (void)) {
 	char old_button_name[200], new_button_name[200];
 	if(finished==0) {
 
-		if(iters==10 || placer.is_grid_congested(ic,config)==1) {
+		if(iters>3&&(iters==10 || placer.is_grid_congested(ic,config)==1)) {
 			placer.snap_to_grid(ic, config);
 			sprintf (old_button_name, "Step <%d>",iters);
 			sprintf (new_button_name, "Done[%d]",1);

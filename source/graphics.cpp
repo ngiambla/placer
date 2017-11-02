@@ -919,8 +919,7 @@ destroy_button (const char *button_text)
 	bnum = -1;
 	space = 8;
 	for (i = 0; i < num_buttons; i++) {
-		if (button[i].type == BUTTON_TEXT && 
-			strcmp (button[i].text, button_text) == 0) {
+		if (button[i].type == BUTTON_TEXT && strcmp (button[i].text, button_text) == 0) {
 			bnum = i;
 			break;
 		}

@@ -23,10 +23,10 @@ struct pair_hash {
 
 // void constructors and destructors.
 Placer::Placer() {
-	q1_w=2;
-	q2_w=2;
-	q3_w=2;
-	q4_w=2;
+	q1_w=3;
+	q2_w=3;
+	q3_w=3;
+	q4_w=3;
 }
 
 Placer::~Placer() {}
@@ -242,6 +242,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 	default_random_engine generator;
 	generator.seed(iter); // used for rand number gens.
 
+
 	if(iter==1) {
 		cur_x_cuts[0]=(float)ic.get_grid_size()/2;
 		cur_y_cuts[0]=(float)ic.get_grid_size()/2;
@@ -325,6 +326,8 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 			}			
 		}
 
+		map<int, int> check_dist;
+
 		for(vector<int> row : config.get_blck_to_nets()) {
 
 			int bid=row[0];
@@ -334,7 +337,7 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 			if(blck_to_add.is_stale()==0) {
 	  			if(blck_to_add.is_fixed()==0 && (blck_to_add.belongs_to() == i || blck_to_add.belongs_to() == -2)) {
 					
-					if(iter<=1) {
+					if(iter<2 || iter > 3) {
 						discrete_distribution<int> distribution {wc1, wc2, wc3, wc4}; // adjust distribution on each roll.
 						int potential_class=distribution(generator);
 
@@ -373,14 +376,14 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 			  					break;
 			  			}
 					} else {
-			  			switch(current_count) {
+			  			switch(current_count%4) {
 			  				case 0:
 			  					class_to_blck[0].push_back(bid);
 			  					blck_to_add.set_to_group((i-i%4)+i*4);
 			  					break;
 			  				case 1:
 			  					class_to_blck[1].push_back(bid);
-			  					blck_to_add.set_to_group((i+1-i%4)+i*4); 					
+			  					blck_to_add.set_to_group((i+1-i%4)+i*4);					
 			  					break;
 			  				case 2:
 			  					class_to_blck[2].push_back(bid);
@@ -391,8 +394,9 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 			  					blck_to_add.set_to_group((i+3-i%4)+i*4);
 			  					break;
 			  			}
-			  			++current_count;
+			  			++current_count;						
 					}
+				
 
 				} else if(blck_to_add.is_pseudo()==1) {
 	 				blck_to_add.update_pseudo_blck_weight();
@@ -466,20 +470,13 @@ int Placer::spread(IC &ic, Configholder &config, int iter) {
 		next_y_cuts[3+i*4]=cur_y_cuts[i]+resize_inc;
 
 	}
-	
-	normal_distribution<double> dist(0,1);
-	q1_w+=1*sigmoid(dist(generator), 0, 1, 1);
 
-	q2_w+=1*sigmoid(dist(generator), 0, 1, 1);
+	q1_w*=pow(2,iter+1);
+	q2_w*=pow(2,iter+1);
+	q3_w*=pow(2,iter+1);
+	q4_w*=pow(2,iter+1);
 
-	q3_w+=1*sigmoid(dist(generator), 0, 1, 1);
 
-	q4_w+=1*sigmoid(dist(generator), 0, 1, 1);
-
-	q1_w=max((int)q1_w, 32);
-	q2_w=max((int)q2_w, 32);
-	q3_w=max((int)q3_w, 32);
-	q4_w=max((int)q4_w, 32);
 
 	printf("\n");
 	// purge cuts;
@@ -504,9 +501,8 @@ int Placer::is_grid_congested(IC ic, Configholder config) {
 	int congestion_managable=0;
 	int grid_size=ic.get_grid_size();
 	float num_of_blocks=(float)(config.get_blck_to_nets().size()-config.get_ref_blcks().size());
+	float overfill_count=0;
 	int i,j;
-
-	int overfill_count=0;
 
 	map< pair<int, int> , vector<int> > grid_to_blcks;
 	vector<int> blck_ids;
@@ -527,14 +523,17 @@ int Placer::is_grid_congested(IC ic, Configholder config) {
 
 	for(const auto& key : grid_to_blcks) {
 		if(grid_to_blcks[key.first].size()>1) {
-			if((float)grid_to_blcks[key.first].size()/num_of_blocks > 0.134) {
-				LOG(INFO) << "Percentage of Overfill: "<< (float)grid_to_blcks[key.first].size()/num_of_blocks;
-				return 0;
-			}
+			overfill_count++;
 		}
 	}
+	LOG(INFO) << "Overfill: " << overfill_count/(grid_size*grid_size) << "%";
+	if(overfill_count/(grid_size*grid_size)<=0.25) {
+		return 1;
+	} else {
+		return 0;
+	}
 
-	return 1;
+	//return 1;
 } 
 
 int Placer::snap_to_grid(IC &ic, Configholder config) {
